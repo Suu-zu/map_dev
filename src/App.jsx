@@ -1,122 +1,107 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useState } from "react";
+import "./App.css";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [artist, setArtist] = useState("");
+  const [eventName, setEventName] = useState("");
+  const [venue, setVenue] = useState("");
+  const [date, setDate] = useState("");
+
+  const [records, setRecords] = useState([]);
+
+  const handleRegister = () => {
+  // 入力チェック
+  if (!artist || !eventName || !venue || !date) {
+    alert("すべて入力してください");
+    return;
+  }
+
+  // 新しいライブ記録
+  const newRecord = {
+    artist,
+    eventName,
+    venue,
+    date,
+  };
+
+  // 一覧に追加
+  setRecords([...records, newRecord]);
+
+  // 入力欄を空にする
+  setArtist("");
+  setEventName("");
+  setVenue("");
+  setDate("");
+};
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
+    <div className="container">
+      <h1>推し活マップ</h1>
+
+      <form className="form">
+        <label>
+          推し名
+          <input
+            type="text"
+            placeholder="例：〇〇"
+            value={artist}
+            onChange={(e) => setArtist(e.target.value)}
+/>
+        </label>
+
+        <label>
+          イベント名
+          <input
+            type="text"
+            placeholder="例：全国ツアー2026"
+            value={eventName}
+            onChange={(e) => setEventName(e.target.value)}
+  />
+        </label>
+
+        <label>
+          会場名
+          <input
+            type="text"
+            placeholder="例：東京ドーム"
+            value={venue}
+            onChange={(e) => setVenue(e.target.value)}
+          />
+        </label>
+
+        <label>
+          開催日
+          <input
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+          />
+        </label>
+
+        <button type="button" onClick={handleRegister}>
+          登録する
         </button>
-      </section>
 
-      <div className="ticks"></div>
+      </form>
+      <h2>登録済みライブ</h2>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
+      {records.length === 0 ? (
+        <p>まだ登録されていません。</p>
+      ) : (
+        <ul>
+          {records.map((record, index) => (
+            <li key={index}>
+              <strong>{record.artist}</strong><br />
+              {record.eventName}<br />
+              {record.venue}<br />
+              {record.date}
             </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+          ))}
+        </ul>
+      )}
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+    </div>
+  );
 }
 
-export default App
+export default App;

@@ -34,6 +34,11 @@ function App() {
   setDate("");
 };
 
+  const handleDelete = (index) => {
+    const newRecords = records.filter((_, i) => i !== index);
+    setRecords(newRecords);
+  };
+
   return (
     <div className="container">
       <h1>推し活マップ</h1>
@@ -90,11 +95,15 @@ function App() {
       ) : (
         <ul>
           {records.map((record, index) => (
-            <li key={index}>
-              <strong>{record.artist}</strong><br />
-              {record.eventName}<br />
-              {record.venue}<br />
-              {record.date}
+            <li key={index} className="record-card">
+              <strong>🎤 {record.artist}</strong><br />
+              🎫 {record.eventName}<br />
+              📍 {record.venue}<br />
+              📅 {record.date}<br /><br />
+
+              <button onClick={() => handleDelete(index)}>
+              削除
+              </button>
             </li>
           ))}
         </ul>

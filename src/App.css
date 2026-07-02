@@ -40,3 +40,25 @@ button {
   font-size: 16px;
   cursor: pointer;
 }
+
+.record-card {
+  list-style: none;
+  background: #f8f8f8;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 15px;
+}
+
+.record-card button {
+  background: crimson;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.record-card button:hover {
+  opacity: 0.8;
+}

@@ -10,10 +10,43 @@ function App() {
 
   const [records, setRecords] = useState([]);
 
+  const [editingId, setEditingId] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  
   const handleRegister = async () => {
     // 入力チェック
     if (!artist || !eventName || !venue || !date) {
       alert("すべて入力してください");
+      return;
+    }
+
+    if (isEditing) {
+      const { error } = await supabase
+        .from("live_records")
+        .update({
+          artist: artist,
+          event_name: eventName,
+          venue: venue,
+          event_date: date,
+        })
+        .eq("id", editingId);
+
+      if (error) {
+        alert("更新に失敗しました");
+        console.error(error);
+        return;
+      }
+
+      await fetchRecords();
+
+      setArtist("");
+      setEventName("");
+      setVenue("");
+      setDate("");
+
+      setEditingId(null);
+      setIsEditing(false);
+
       return;
     }
 
@@ -66,6 +99,16 @@ function App() {
 
   setRecords(formattedData);
 };
+
+  const handleEdit = (record) => {
+    setArtist(record.artist);
+    setEventName(record.eventName);
+    setVenue(record.venue);
+    setDate(record.date);
+
+    setEditingId(record.id);
+    setIsEditing(true);
+  };
 
   const handleDelete = async (id) => {
     const { error } = await supabase
@@ -131,7 +174,7 @@ function App() {
         </label>
 
         <button type="button" onClick={handleRegister}>
-          登録する
+          {isEditing ? "更新する" : "登録する"}
         </button>
 
       </form>
@@ -147,6 +190,12 @@ function App() {
               🎫 {record.eventName}<br />
               📍 {record.venue}<br />
               📅 {record.date}<br /><br />
+
+              <button onClick={() => handleEdit(record)}>
+              編集
+              </button>
+
+              {" "}
 
               <button onClick={() => handleDelete(record.id)}>
               削除

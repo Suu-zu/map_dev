@@ -9,17 +9,71 @@ html, body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
+/* アプリ本体の枠（スクロールしても相対位置を保てるように設定） */
 .container {
   display: flex;
   flex-direction: column;
-  width: 100%;       /* ★100vw から 100% に変更 */
+  width: 100%;
   height: 100vh;
-  box-sizing: border-box; /* ★パディングを内側に収める設定 */
-  overflow-x: hidden;     /* ★横スクロールを絶対に禁止する */
-  overflow-y: auto;       /* 縦方向だけ必要に応じてスクロール */
-  padding: 20px;
+  box-sizing: border-box;
+  overflow: hidden; /* ★コンテナ自体はスクロールさせない */
   background-color: #ffffff;
   position: relative;
+}
+
+/* メインコンテンツ表示部分（ナビゲーションバーの高さ分、下に余白を作る） */
+.main-content {
+  flex: 1;
+  overflow-y: auto; /* ★中身だけがここでスクロールする */
+  padding: 20px;
+  padding-bottom: 90px; /* ★下部ナビに隠れないように広めの余白を設置 */
+}
+
+/* 画面下部に固定されるボトムナビゲーションバー */
+.bottom-nav {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 65px;
+  background-color: #ffffff;
+  border-top: 2px solid #1a1a1a; /* ポップな黒枠 */
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  z-index: 1000;
+  box-sizing: border-box;
+}
+
+/* 通常（未選択）のタブボタン */
+.bottom-nav button {
+  background: none;
+  border: none;
+  color: #333333;
+  font-size: 11px;
+  font-weight: bold;
+  padding: 6px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  box-shadow: none;
+  transition: all 0.2s ease-in-out;
+}
+
+
+
+/* ★参考画像のような「真ん中の飛び出すメインボタン」風のスタイル（オプション） */
+.bottom-nav button.main-tab {
+  background-color: #ff2a75;
+  color: white;
+  border: 2px solid #1a1a1a;
+  border-radius: 16px;
+  padding: 8px 14px;
+  margin-top: -20px; /* ★ボタンを少し上に飛び出させる */
+  box-shadow: 2px 3px 0px #1a1a1a; /* ポップな黒い影 */
 }
 
 h1 {
@@ -88,4 +142,274 @@ button {
 ul {
   padding: 0;
   margin: 0;
+}
+
+/* --- トップ画面：ヘッダー --- */
+.top-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 4px;
+  margin-bottom: 12px;
+}
+
+.user-name {
+  font-weight: bold;
+  font-size: 14px;
+  color: #333;
+}
+
+.user-badge {
+  font-size: 11px;
+  background-color: #fff0f5;
+  color: #ff2a75;
+  border: 1px solid #ff2a75;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-weight: bold;
+}
+
+/* --- 1. 次の現場カード --- */
+.next-live-card {
+  background: linear-gradient(135deg, #ff2a75, #ff6097);
+  color: white;
+  padding: 16px;
+  border-radius: 18px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 12px rgba(255, 42, 117, 0.25);
+}
+
+.card-tag {
+  font-size: 11px;
+  font-weight: bold;
+  letter-spacing: 1px;
+  opacity: 0.9;
+}
+
+.countdown-title {
+  font-size: 20px;
+  font-weight: bold;
+  margin: 6px 0;
+}
+
+.highlight-num {
+  font-size: 32px;
+  font-weight: 900;
+}
+
+.next-live-info {
+  font-size: 12px;
+  opacity: 0.9;
+}
+
+/* --- 2. 推し活サマリー --- */
+.summary-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.summary-box {
+  flex: 1;
+  min-width: 120px;
+  background: #ffffff;
+  border: 2px solid #1a1a1a;
+  border-radius: 14px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 2px 2px 0px #1a1a1a;
+}
+
+.summary-box.full-width {
+  flex: 100%;
+  background: #fff8fa;
+}
+
+.box-label {
+  font-size: 11px;
+  color: #666;
+  font-weight: bold;
+}
+
+.box-value {
+  font-size: 22px;
+  font-weight: 900;
+  color: #1a1a1a;
+  margin-top: 2px;
+}
+
+.box-value small {
+  font-size: 12px;
+  font-weight: normal;
+}
+
+.box-sub {
+  font-size: 11px;
+  color: #ff2a75;
+  font-weight: bold;
+  margin-top: 2px;
+}
+
+/* --- 3. 都道府県進捗 --- */
+.prefecture-card {
+  background: #ffffff;
+  border: 2px solid #1a1a1a;
+  border-radius: 14px;
+  padding: 12px;
+  margin-bottom: 20px;
+  box-shadow: 2px 2px 0px #1a1a1a;
+}
+
+.pref-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
+.progress-bar-bg {
+  width: 100%;
+  height: 10px;
+  background-color: #eee;
+  border-radius: 5px;
+  overflow: hidden;
+  border: 1px solid #1a1a1a;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background-color: #ff2a75;
+  border-radius: 5px;
+}
+
+/* --- 4. 最近行ったライブ --- */
+.recent-section {
+  margin-bottom: 20px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.section-header h3 {
+  font-size: 15px;
+  margin: 0;
+}
+
+.btn-see-all {
+  background: none !important;
+  border: none !important;
+  color: #ff2a75 !important;
+  font-size: 12px !important;
+  font-weight: bold !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+  cursor: pointer;
+}
+
+.recent-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.recent-item {
+  display: flex;
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  padding: 10px 12px;
+  gap: 12px;
+}
+
+.recent-date {
+  font-size: 11px;
+  font-weight: bold;
+  color: #666;
+  background: #f0f0f0;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.recent-detail {
+  display: flex;
+  flex-direction: column;
+  font-size: 13px;
+}
+
+.recent-detail span {
+  font-size: 11px;
+  color: #888;
+}
+
+/* --- 年別一覧画面（アコーディオン） --- */
+.page-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.page-header h2 {
+  font-size: 18px;
+  margin: 0;
+}
+
+.btn-back {
+  background: #ffffff !important;
+  color: #1a1a1a !important;
+  border: 2px solid #1a1a1a !important;
+  padding: 6px 12px !important;
+  font-size: 12px !important;
+  border-radius: 10px !important;
+  box-shadow: 2px 2px 0px #1a1a1a !important;
+}
+
+.accordion-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.accordion-item {
+  border: 2px solid #1a1a1a;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #ffffff;
+  box-shadow: 2px 2px 0px #1a1a1a;
+}
+
+.accordion-header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px;
+  background: #fff8fa !important;
+  color: #1a1a1a !important;
+  border: none !important;
+  border-radius: 0 !important;
+  font-size: 14px !important;
+  font-weight: bold !important;
+  box-shadow: none !important;
+  cursor: pointer;
+}
+
+.accordion-content {
+  padding: 12px;
+  background: #ffffff;
+  list-style: none;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }

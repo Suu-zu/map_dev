@@ -34,6 +34,13 @@ function App() {
   const [editingId, setEditingId] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   
+  const [activeTab, setActiveTab] = useState("home");
+
+  // ★年別一覧画面を表示しているかどうかのフラグ
+  const [showAllRecords, setShowAllRecords] = useState(false);
+  // ★開いている年（初期状態は最新の2026年を開くなど）
+  const [openYear, setOpenYear] = useState(null);
+  
   const handleRegister = async () => {
     // 入力チェック
     if (!artist || !eventName || !venue || !date) {
@@ -154,55 +161,233 @@ function App() {
     await fetchRecords();
   };
 
+  // ★年ごとにデータをグループ化する処理
+  const recordsByYear = records.reduce((acc, record) => {
+    // 日付（YYYY-MM-DD や YYYY/MM/DD）から「年」を取り出す
+    const year = record.date ? record.date.substring(0, 4) : "その他";
+    if (!acc[year]) {
+      acc[year] = [];
+    }
+    acc[year].push(record);
+    return acc;
+  }, {});
+
+  // 年を降順（新しい年が上）に並べ替え
+  const sortedYears = Object.keys(recordsByYear).sort((a, b) => b - a);
+
   useEffect(() => {
   fetchRecords();
   }, []);
 
+
   return (
     <div className="container">
-      <h1>推し活マップ</h1>
+      {/* 画面の上部・コンテンツエリア */}
+      <div className="main-content">
+        
+        {/* ① ホームタブが選ばれているとき */}
+        {activeTab === "home" && (
+          <div className="tab-page">
 
-      <Map records={records} />
+            {/* ▼ 「すべて見る」画面が開いている時 */}
+                {showAllRecords ? (
+                  <div className="all-records-page">
+                    <div className="page-header">
+                      <button className="btn-back" onClick={() => setShowAllRecords(false)}>
+                        ← 戻る
+                      </button>
+                      <h2>ライブ参加記録一覧 📜</h2>
+                    </div>
 
-      <LiveForm
-        artist={artist}
-        setArtist={setArtist}
-        eventName={eventName}
-        setEventName={setEventName}
-        venue={venue}
-        setVenue={setVenue}
-        date={date}
-        setDate={setDate}
-        handleRegister={handleRegister}
-        isEditing={isEditing}
-      />
-      <h2>登録済みライブ</h2>
+                    <div className="accordion-list">
+                      {sortedYears.length === 0 ? (
+                        <p className="empty-text">まだ登録されていません。</p>
+                      ) : (
+                        sortedYears.map((year) => (
+                          <div key={year} className="accordion-item">
+                            {/* 年のヘッダー（タップで開閉） */}
+                            <button 
+                              className="accordion-header"
+                              onClick={() => setOpenYear(openYear === year ? null : year)}
+                            >
+                              <span>🗓️ {year}年 （{recordsByYear[year].length}回）</span>
+                              <span>{openYear === year || (openYear === null && year === sortedYears[0]) ? "▲" : "▼"}</span>
+                            </button>
 
-      {records.length === 0 ? (
-        <p>まだ登録されていません。</p>
-      ) : (
-        <ul>
-          {records.map((record) => (
-            <li key={record.id} className="record-card">
-              <strong>🎤 {record.artist}</strong><br />
-              🎫 {record.eventName}<br />
-              📍 {record.venue}<br />
-              📅 {record.date}<br /><br />
+                            {/* 年の中身 */}
+                            {(openYear === year || (openYear === null && year === sortedYears[0])) && (
+                              <ul className="accordion-content">
+                                {recordsByYear[year].map((record) => (
+                                  <li key={record.id} className="record-card">
+                                    <div className="card-header">
+                                      <strong className="artist-name">🎤 {record.artist}</strong>
+                                      <span className="event-date">📅 {record.date}</span>
+                                    </div>
+                                    <div className="card-body">
+                                      <p className="event-title">🎫 {record.eventName}</p>
+                                      <p className="venue-name">📍 {record.venue}</p>
+                                    </div>
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  /* ▼ 通常のホームダッシュボード画面 */
+                  <> 
+                    {/* ヘッダーエリア */}
+                    <div className="top-header">
+                      <span className="user-name">👤 推し活太郎</span>
+                      <span className="user-badge">🏆 旅するオタク</span>
+                    </div>
 
-              <button onClick={() => handleEdit(record)}>
-              編集
-              </button>
+                    {/* 1. 次の現場 */}
+                    <div className="next-live-card">
+                      <div className="card-tag">NEXT LIVE 🎤</div>
+                      <div className="countdown-title">あと <span className="highlight-num">12</span> 日！</div>
+                      <div className="next-live-info">2026/07/21 @ 横浜アリーナ</div>
+                    </div>
 
-              {" "}
+                    {/* 2. 推し活サマリー */}
+                    <div className="summary-grid">
+                      <div className="summary-box">
+                        <span className="box-label">総参戦回数</span>
+                        <span className="box-value">{records.length} <small>回</small></span>
+                      </div>
+                      <div className="summary-box">
+                        <span className="box-label">今年の遠征</span>
+                        <span className="box-value">14 <small>回</small></span>
+                      </div>
+                      <div className="summary-box full-width">
+                        <span className="box-label">総移動距離</span>
+                        <span className="box-value">12,480 <small>km</small></span>
+                        <span className="box-sub">地球 約 0.31 周 🌍</span>
+                      </div>
+                    </div>
 
-              <button onClick={() => handleDelete(record.id)}>
-              削除
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
+                    {/* 3. 都道府県制覇ミニ進捗 */}
+                    <div className="prefecture-card">
+                      <div className="pref-header">
+                        <span>🗾 都道府県制覇</span>
+                        <strong>18 / 47 (38%)</strong>
+                      </div>
+                      <div className="progress-bar-bg">
+                        <div className="progress-bar-fill" style={{ width: "38%" }}></div>
+                      </div>
+                    </div>
 
+                    {/* 4. 最近行ったライブ（直近3件） */}
+                    <div className="recent-section">
+                      <div className="section-header">
+                        <h3>最近行ったライブ</h3>
+                        {/* ★クリックですべて見る（年別一覧）画面を表示 */}
+                        <button className="btn-see-all" onClick={() => setShowAllRecords(true)}>
+                          すべて見る ＞
+                        </button>
+                      </div>
+
+                      {records.length === 0 ? (
+                        <p className="empty-text">まだ登録されていません。</p>
+                      ) : (
+                        <ul className="recent-list">
+                          {[...records].reverse().slice(0, 3).map((record) => (
+                            <li key={record.id} className="recent-item">
+                              <div className="recent-date">{record.date}</div>
+                              <div className="recent-detail">
+                                <strong>{record.artist}</strong>
+                                <span>@{record.venue}</span>
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+            
+            {/* <LiveForm
+              artist={artist}
+              setArtist={setArtist}
+              eventName={eventName}
+              setEventName={setEventName}
+              venue={venue}
+              setVenue={setVenue}
+              date={date}
+              setDate={setDate}
+              handleRegister={handleRegister}
+              isEditing={isEditing}
+            />
+
+            <h2>登録済みライブ</h2>
+            {records.length === 0 ? (
+              <p>まだ登録されていません。</p>
+            ) : (
+              <ul>
+                {records.map((record) => (
+                  <li key={record.id} className="record-card">
+                    <strong>🎤 {record.artist}</strong><br />
+                    🎫 {record.eventName}<br />
+                    📍 {record.venue}<br />
+                    📅 {record.date}<br /><br />
+                    <button onClick={() => handleEdit(record)}>編集</button>{" "}
+                    <button onClick={() => handleDelete(record.id)}>削除</button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}*/}
+
+        {/* ② マップタブが選ばれているとき */}
+        {activeTab === "map" && (
+          <div className="tab-page map-page">
+            <h1>ライブマップ 🗺️</h1>
+            <Map records={records} />
+          </div>
+        )}
+
+        {/* ③ マイページタブが選ばれているとき */}
+        {activeTab === "profile" && (
+          <div className="tab-page">
+            <h1>マイページ 👤</h1>
+            <p>※準備中</p>
+          </div>
+        )}
+
+      </div>
+
+      {/* 下部固定のボトムナビゲーションバー */}
+      <nav className="bottom-nav">
+        <button 
+          className={activeTab === "home" ? "active" : ""} 
+          onClick={() => setActiveTab("home")}
+        >
+          <span>🏠</span>
+          <span>ホーム</span>
+        </button>
+
+        <button 
+          className={activeTab === "map" ? "active" : ""} 
+          onClick={() => setActiveTab("map")}
+        >
+          <span>🗺️</span>
+          <span>マップ</span>
+        </button>
+
+        <button 
+          className={activeTab === "profile" ? "active" : ""} 
+          onClick={() => setActiveTab("profile")}
+        >
+          <span>👤</span>
+          <span>マイページ</span>
+        </button>
+      </nav>
     </div>
   );
 }

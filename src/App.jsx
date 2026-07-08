@@ -1,10 +1,25 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react"; // ★ useMemo を追加
 import { supabase } from "./supabase";
 import "./App.css";
 import LiveForm from "./components/LiveForm";
 import Map from "./components/Map";
 import Login from "./pages/Login";
 import HomeLocation from "./pages/HomeLocation";
+
+// 2点間の直線距離（km）を計算する関数
+function calculateDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371; // 地球の半径 (km)
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
 
 const getCoordinates = async (venueName) => {
   try {
@@ -32,7 +47,6 @@ function App() {
 
   const [records, setRecords] = useState([]);
 
-
   const [editingId, setEditingId] = useState(null);
   const [homeLocation, setHomeLocation] = useState(null);
 
@@ -45,8 +59,143 @@ function App() {
   // ★開いている年（初期状態は最新の2026年を開くなど）
   const [openYear, setOpenYear] = useState(null);
   
+  // モーダル（登録フォーム）の開閉フラグ
+  const [showFormModal, setShowFormModal] = useState(false);
+
+  const [session, setSession] = useState(null);
+
+  const [hasHome, setHasHome] = useState(false);
+  const [loadingHome, setLoadingHome] = useState(true);
+
+  // ★ 自動計算（サマリー用データ）の定義
+  const summaryData = useMemo(() => {
+    const currentYear = new Date().getFullYear().toString();
+
+    // ① 今年の遠征回数
+    const thisYearCount = records.filter(
+      (r) => r.date && r.date.startsWith(currentYear)
+    ).length;
+
+    // ② 総移動距離（往復）
+    let totalDistance = 0;
+    if (homeLocation && homeLocation.latitude && homeLocation.longitude) {
+      records.forEach((r) => {
+        if (r.latitude && r.longitude) {
+          const oneWay = calculateDistance(
+            homeLocation.latitude,
+            homeLocation.longitude,
+            r.latitude,
+            r.longitude
+          );
+          totalDistance += oneWay * 2;
+        }
+      });
+    }
+
+    const earthLaps = (totalDistance / 40075).toFixed(2);
+
+    // ③ 都道府県の判定マッピング
+    const prefKeywords = {
+      北海道: ["北海道", "札幌", "函館"],
+      青森県: ["青森"], 岩手県: ["岩手", "盛岡"], 宮城県: ["宮城", "仙台"], 秋田県: ["秋田"], 山形県: ["山形"], 福島県: ["福島"],
+      茨城県: ["茨城", "水戸"], 栃木県: ["栃木", "宇都宮"], 
+      群馬県: ["群馬", "高崎", "前橋"], 
+      埼玉県: ["埼玉", "さいたま", "所沢", "越谷", "川口"], 
+      千葉県: ["千葉", "幕張", "舞浜", "船橋"], 
+      東京都: ["東京", "武道館", "ドーム", "渋谷", "新宿", "池袋", "有明", "お台場", "立川", "町田", "八王子", "味の素", "国立競技場"], 
+      神奈川県: ["神奈川", "横浜", "ぴあアリーナ", "Kアリーナ", "パシフィコ", "川崎"],
+      新潟県: ["新潟"], 富山県: ["富山"], 石川県: ["石川", "金沢"], 福井県: ["福井"],
+      山梨県: ["山梨"], 長野県: ["長野", "松本"], 岐阜県: ["岐阜"], 
+      静岡県: ["静岡", "エコパ", "浜松"], 
+      愛知県: ["愛知", "名古屋", "ガイシ", "バンテリン"], 三重県: ["三重", "鈴鹿"],
+      滋賀県: ["滋賀"], 京都府: ["京都"], 
+      大阪府: ["大阪", "城ホール", "京セラ", "長居", "梅田", "難波"], 
+      兵庫県: ["兵庫", "神戸"], 奈良県: ["奈良"], 和歌山県: ["和歌山"],
+      鳥取県: ["鳥取"], 島根県: ["島根"], 岡山県: ["岡山"], 広島県: ["広島"], 山口県: ["山口"],
+      徳島県: ["徳島"], 香川県: ["香川", "高松"], 愛媛県: ["愛媛", "松山"], 高知県: ["高知"],
+      福岡県: ["福岡", "博多", "ペイペイ"], 佐賀県: ["佐賀"], 長崎県: ["長崎"], 熊本県: ["熊本"], 大分県: ["大分"], 宮崎県: ["宮崎"], 鹿児島県: ["鹿児島"], 沖縄県: ["沖縄"]
+    };
+
+    const visitedPrefectures = new Set();
+
+    records.forEach((r) => {
+      // 1. 明示的に prefecture が指定されていればそれを使う
+      if (r.prefecture) {
+        visitedPrefectures.add(r.prefecture);
+        return;
+      }
+
+      // 2. 会場名（venue）から該当する都道府県をキーワード検索
+      if (r.venue) {
+        let matched = false;
+        for (const [pref, keywords] of Object.entries(prefKeywords)) {
+          if (keywords.some((kw) => r.venue.includes(kw))) {
+            visitedPrefectures.add(pref);
+            matched = true;
+            break;
+          }
+        }
+        if (matched) return;
+      }
+    });
+
+    const prefCount = visitedPrefectures.size;
+    const prefPercentage = Math.round((prefCount / 47) * 100);
+
+    // 🏆 称号の自動判定ロジック
+  let userBadge = "🏠 ご近所オタク";
+  if (prefCount >= 47) {
+    userBadge = "👑 全国制覇神オタク";
+  } else if (prefCount >= 35 || records.length >= 50) {
+    userBadge = "🗾 全国行脚オタク";
+  } else if (prefCount >= 20 || records.length >= 30) {
+    userBadge = "✈️ 旅するオタク";
+  } else if (prefCount >= 10 || records.length >= 15) {
+    userBadge = "🚄 遠征中級者オタク";
+  } else if (prefCount >= 3 || records.length >= 5) {
+    userBadge = "🚃 フットワーク軽めオタク";
+  }
+
+  return {
+    thisYearCount,
+    totalDistance: Math.round(totalDistance).toLocaleString(),
+    earthLaps,
+    prefCount,
+    prefPercentage,
+    userBadge, // ★ 追加
+  };
+
+    return {
+      thisYearCount,
+      totalDistance: Math.round(totalDistance).toLocaleString(),
+      earthLaps,
+      prefCount,
+      prefPercentage,
+    };
+  }, [records, homeLocation]);
+
+  // ★ NEXT LIVE（次の現場）の自動取得
+  const nextLive = useMemo(() => {
+    const today = new Date().toISOString().split("T")[0]; // 今日の日付 YYYY-MM-DD
+    // 今日以降のライブを日付順にソート
+    const upcoming = records
+      .filter((r) => r.date && r.date >= today)
+      .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    if (upcoming.length === 0) return null;
+
+    const next = upcoming[0];
+    const diffTime = new Date(next.date) - new Date(today);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    return {
+      daysLeft: diffDays,
+      date: next.date,
+      venue: next.venue,
+    };
+  }, [records]);
+
   const handleRegister = async () => {
-    // 入力チェック
     if (!artist || !eventName || !venue || !date) {
       alert("すべて入力してください");
       return;
@@ -80,13 +229,12 @@ function App() {
       setVenue("");
       setDate("");
 
-  setEditingId(null);
-  setIsEditing(false);
+      setEditingId(null);
+      setIsEditing(false);
+      setShowFormModal(false);
+      return;
+    }
 
-  return;
-}
-
-    // Supabaseへ保存
     const { error } = await supabase
       .from("live_records")
       .insert([
@@ -106,10 +254,8 @@ function App() {
       return;
     }
 
-    // 一覧に追加
     await fetchRecords();
 
-    // 入力欄を空にする
     setArtist("");
     setEventName("");
     setVenue("");
@@ -118,52 +264,27 @@ function App() {
   };
 
   const fetchRecords = async () => {
-  const { data, error } = await supabase
-    .from("live_records")
-    .select("*")
-    .order("event_date", { ascending: true });
-
-  if (error) {
-    console.error(error);
-    return;
-  }
-
-  const formattedData = data.map((item) => ({
-    id: item.id,
-    artist: item.artist,
-    eventName: item.event_name,
-    venue: item.venue,
-    date: item.event_date,
-    latitude: item.latitude,   
-    longitude: item.longitude,
-  }));
-
-  setRecords(formattedData);
-};
-
-  const handleEdit = (record) => {
-    setArtist(record.artist);
-    setEventName(record.eventName);
-    setVenue(record.venue);
-    setDate(record.date);
-
-    setEditingId(record.id);
-    setIsEditing(true);
-  };
-
-  const handleDelete = async (id) => {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("live_records")
-      .delete()
-      .eq("id", id);
+      .select("*")
+      .order("event_date", { ascending: true });
 
     if (error) {
-      alert("削除に失敗しました");
       console.error(error);
       return;
     }
 
-    await fetchRecords();
+    const formattedData = data.map((item) => ({
+      id: item.id,
+      artist: item.artist,
+      eventName: item.event_name,
+      venue: item.venue,
+      date: item.event_date,
+      latitude: item.latitude,   
+      longitude: item.longitude,
+    }));
+
+    setRecords(formattedData);
   };
 
   const checkHomeLocation = async (userId) => {
@@ -194,14 +315,11 @@ function App() {
       return;
     }
 
-    console.log(data);
-    
     setHomeLocation(data);
   };
 
-  // ★年ごとにデータをグループ化する処理
+  // 年ごとにデータをグループ化
   const recordsByYear = records.reduce((acc, record) => {
-    // 日付（YYYY-MM-DD や YYYY/MM/DD）から「年」を取り出す
     const year = record.date ? record.date.substring(0, 4) : "その他";
     if (!acc[year]) {
       acc[year] = [];
@@ -210,20 +328,10 @@ function App() {
     return acc;
   }, {});
 
-  // 年を降順（新しい年が上）に並べ替え
   const sortedYears = Object.keys(recordsByYear).sort((a, b) => b - a);
 
-  // モーダル（登録フォーム）の開閉フラグ
-  const [showFormModal, setShowFormModal] = useState(false);
-
-  const [session, setSession] = useState(null);
-
-  const [hasHome, setHasHome] = useState(false);
-  const [loadingHome, setLoadingHome] = useState(true);
-  
   useEffect(() => {
     fetchRecords();
-    
 
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
@@ -239,22 +347,22 @@ function App() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-          setSession(session);
+      setSession(session);
 
-          if (session) {
-            checkHomeLocation(session.user.id);
-            fetchHomeLocation(session.user.id);
-          } else {
-            setLoadingHome(false);
-          }
-        });
+      if (session) {
+        checkHomeLocation(session.user.id);
+        fetchHomeLocation(session.user.id);
+      } else {
+        setLoadingHome(false);
+      }
+    });
 
     return () => subscription.unsubscribe();
   }, []);
 
   if (!session) {
-  return <Login />;
-}
+    return <Login />;
+  }
 
   if (loadingHome) {
     return <p>読み込み中...</p>;
@@ -269,7 +377,7 @@ function App() {
     );
   }
 
-return (
+  return (
     <div className="container">
       {/* 画面の上部・コンテンツエリア */}
       <div className="main-content">
@@ -279,132 +387,137 @@ return (
           <div className="tab-page">
 
             {/* ▼ 「すべて見る」画面が開いている時 */}
-                {showAllRecords ? (
-                  <div className="all-records-page">
-                    <div className="page-header">
-                      <button className="btn-back" onClick={() => setShowAllRecords(false)}>
-                        ← 戻る
-                      </button>
-                      <h2>ライブ参加記録一覧 📜</h2>
-                    </div>
+            {showAllRecords ? (
+              <div className="all-records-page">
+                <div className="page-header">
+                  <button className="btn-back" onClick={() => setShowAllRecords(false)}>
+                    ← 戻る
+                  </button>
+                  <h2>ライブ参加記録一覧 📜</h2>
+                </div>
 
-                    <div className="accordion-list">
-                      {sortedYears.length === 0 ? (
-                        <p className="empty-text">まだ登録されていません。</p>
-                      ) : (
-                        sortedYears.map((year) => (
-                          <div key={year} className="accordion-item">
-                            {/* 年のヘッダー（タップで開閉） */}
-                            <button 
-                              className="accordion-header"
-                              onClick={() => setOpenYear(openYear === year ? null : year)}
-                            >
-                              <span>🗓️ {year}年 （{recordsByYear[year].length}回）</span>
-                              <span>{openYear === year || (openYear === null && year === sortedYears[0]) ? "▲" : "▼"}</span>
-                            </button>
-
-                            {/* 年の中身 */}
-                            {(openYear === year || (openYear === null && year === sortedYears[0])) && (
-                              <ul className="accordion-content">
-                                {recordsByYear[year].map((record) => (
-                                  <li key={record.id} className="record-card">
-                                    <div className="card-header">
-                                      <strong className="artist-name">🎤 {record.artist}</strong>
-                                      <span className="event-date">📅 {record.date}</span>
-                                    </div>
-                                    <div className="card-body">
-                                      <p className="event-title">🎫 {record.eventName}</p>
-                                      <p className="venue-name">📍 {record.venue}</p>
-                                    </div>
-                                  </li>
-                                ))}
-                              </ul>
-                            )}
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </div>
-                ) : (
-                  /* ▼ 通常のホームダッシュボード画面 */
-                  <> 
-                    {/* ヘッダーエリア */}
-                    <div className="top-header">
-                      <span className="user-name">👤 推し活太朗</span>
-                      <span className="user-badge">🏆 旅するオタク</span>
-                    </div>
-
-                    {/* 1. 次の現場 */}
-                    <div className="next-live-card">
-                      <div className="card-tag">NEXT LIVE 🎤</div>
-                      <div className="countdown-title">あと <span className="highlight-num">12</span> 日！</div>
-                      <div className="next-live-info">2026/07/21 @ 横浜アリーナ</div>
-                    </div>
-
-                    {/* 2. 推し活サマリー */}
-                    <div className="summary-grid">
-                      <div className="summary-box">
-                        <span className="box-label">総参戦回数</span>
-                        <span className="box-value">{records.length} <small>回</small></span>
-                      </div>
-                      <div className="summary-box">
-                        <span className="box-label">今年の遠征</span>
-                        <span className="box-value">14 <small>回</small></span>
-                      </div>
-                      <div className="summary-box full-width">
-                        <span className="box-label">総移動距離</span>
-                        <span className="box-value">12,480 <small>km</small></span>
-                        <span className="box-sub">地球 約 0.31 周 🌍</span>
-                      </div>
-                    </div>
-
-                    {/* 3. 都道府県制覇ミニ進捗 */}
-                    <div className="prefecture-card">
-                      <div className="pref-header">
-                        <span>🗾 都道府県制覇</span>
-                        <strong>18 / 47 (38%)</strong>
-                      </div>
-                      <div className="progress-bar-bg">
-                        <div className="progress-bar-fill" style={{ width: "38%" }}></div>
-                      </div>
-                    </div>
-
-                    {/* 4. 最近行ったライブ（直近3件） */}
-                    <div className="recent-section">
-                      <div className="section-header">
-                        <h3>最近行ったライブ</h3>
-                        {/* ★クリックですべて見る（年別一覧）画面を表示 */}
-                        <button className="btn-see-all" onClick={() => setShowAllRecords(true)}>
-                          すべて見る ＞
+                <div className="accordion-list">
+                  {sortedYears.length === 0 ? (
+                    <p className="empty-text">まだ登録されていません。</p>
+                  ) : (
+                    sortedYears.map((year) => (
+                      <div key={year} className="accordion-item">
+                        <button 
+                          className="accordion-header"
+                          onClick={() => setOpenYear(openYear === year ? null : year)}
+                        >
+                          <span>🗓️ {year}年 （{recordsByYear[year].length}回）</span>
+                          <span>{openYear === year || (openYear === null && year === sortedYears[0]) ? "▲" : "▼"}</span>
                         </button>
-                      </div>
 
-                      {records.length === 0 ? (
-                        <p className="empty-text">まだ登録されていません。</p>
-                      ) : (
-                        <ul className="recent-list">
-                          {[...records].reverse().slice(0, 3).map((record) => (
-                            <li key={record.id} className="recent-item">
-                              <div className="recent-date">{record.date}</div>
-                              <div className="recent-detail">
-                                <strong>{record.artist}</strong>
-                                <span>@{record.venue}</span>
-                              </div>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-                  </>
-                )}
+                        {(openYear === year || (openYear === null && year === sortedYears[0])) && (
+                          <ul className="accordion-content">
+                            {recordsByYear[year].map((record) => (
+                              <li key={record.id} className="record-card">
+                                <div className="card-header">
+                                  <strong className="artist-name">🎤 {record.artist}</strong>
+                                  <span className="event-date">📅 {record.date}</span>
+                                </div>
+                                <div className="card-body">
+                                  <p className="event-title">🎫 {record.eventName}</p>
+                                  <p className="venue-name">📍 {record.venue}</p>
+                                </div>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
+            ) : (
+              /* ▼ 通常のホームダッシュボード画面 */
+              <> 
+                {/* ヘッダーエリア */}
+                  <div className="top-header">
+                    <span className="user-name">👤 推し活太朗</span>
+                    {/* ★ 自動変化する称号 */}
+                    <span className="user-badge">{summaryData.userBadge}</span>
+                  </div>
+
+                {/* 1. 次の現場 */}
+                <div className="next-live-card">
+                  <div className="card-tag">NEXT LIVE 🎤</div>
+                  {nextLive ? (
+                    <>
+                      <div className="countdown-title">あと <span className="highlight-num">{nextLive.daysLeft}</span> 日！</div>
+                      <div className="next-live-info">{nextLive.date} @ {nextLive.venue}</div>
+                    </>
+                  ) : (
+                    <div className="next-live-info" style={{ marginTop: "8px" }}>予定されている次のライブはありません</div>
+                  )}
+                </div>
+
+                {/* 2. 推し活サマリー */}
+                <div className="summary-grid">
+                  <div className="summary-box">
+                    <span className="box-label">総参戦回数</span>
+                    <span className="box-value">{records.length} <small>回</small></span>
+                  </div>
+                  <div className="summary-box">
+                    <span className="box-label">今年の遠征</span>
+                    <span className="box-value">{summaryData.thisYearCount} <small>回</small></span>
+                  </div>
+                  <div className="summary-box full-width">
+                    <span className="box-label">総移動距離</span>
+                    <span className="box-value">{summaryData.totalDistance} <small>km</small></span>
+                    <span className="box-sub">地球 約 {summaryData.earthLaps} 周 🌍</span>
+                  </div>
+                </div>
+
+                {/* 3. 都道府県制覇ミニ進捗 */}
+                <div className="prefecture-card">
+                  <div className="pref-header">
+                    <span>🗾 都道府県制覇</span>
+                    <strong>{summaryData.prefCount} / 47 ({summaryData.prefPercentage}%)</strong>
+                  </div>
+                  <div className="progress-bar-bg">
+                    <div 
+                      className="progress-bar-fill" 
+                      style={{ width: `${summaryData.prefPercentage}%` }}
+                    ></div>
+                  </div>
+                </div>
+
+                {/* 4. 最近行ったライブ（直近3件） */}
+                <div className="recent-section">
+                  <div className="section-header">
+                    <h3>最近行ったライブ</h3>
+                    <button className="btn-see-all" onClick={() => setShowAllRecords(true)}>
+                      すべて見る ＞
+                    </button>
+                  </div>
+
+                  {records.length === 0 ? (
+                    <p className="empty-text">まだ登録されていません。</p>
+                  ) : (
+                    <ul className="recent-list">
+                      {[...records].reverse().slice(0, 3).map((record) => (
+                        <li key={record.id} className="recent-item">
+                          <div className="recent-date">{record.date}</div>
+                          <div className="recent-detail">
+                            <strong>{record.artist}</strong>
+                            <span>@{record.venue}</span>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </>
             )}
+          </div>
+        )}
 
         {/* ② マップタブが選ばれているとき */}
         {activeTab === "map" && (
           <div className="tab-page map-page">
-            
-            {/* 1. メインの地図表示 */}
             <div className="map-container-full">
               <Map 
                 records={records}
@@ -412,7 +525,6 @@ return (
               />
             </div>
 
-            {/* 2. 右下の浮遊アクションボタン（＋） */}
             <button 
               className="fab-button" 
               onClick={() => setShowFormModal(true)}
@@ -420,7 +532,6 @@ return (
               ＋
             </button>
 
-            {/* 3. ＋ボタンを押した時に出るモーダル（登録フォーム） */}
             {showFormModal && (
               <div className="modal-overlay" onClick={() => setShowFormModal(false)}>
                 <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -444,23 +555,90 @@ return (
                 </div>
               </div>
             )}
-
           </div>
         )}
-        
-        
 
         {/* ③ マイページタブが選ばれているとき */}
-        {activeTab === "profile" && (
-          <div className="tab-page">
-            <h1>マイページ 👤</h1>
-            <p>※準備中</p>
-          </div>
-        )}
+          {activeTab === "profile" && (
+            <div className="tab-page profile-page">
+              <h2>マイページ 👤</h2>
+
+              {/* ユーザープロフィールカード */}
+              <div className="profile-card">
+                <div className="user-info">
+                  
+                  <div>
+                    <h3 className="user-email">{session?.user?.email || "ユーザー"}</h3>
+                    <span className="user-badge">{summaryData.userBadge}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* 設定・統計リスト */}
+              <div className="profile-section">
+                <h3>アカウント・データ設定</h3>
+                
+                <div className="setting-item">
+                  <div>
+                    <strong>🏠 自宅の位置情報</strong>
+                    <p className="setting-desc">遠征距離の基準になる自宅の変更</p>
+                  </div>
+                  <button 
+                    className="btn-secondary" 
+                    onClick={() => setHasHome(false)}
+                  >
+                    変更する
+                  </button>
+                </div>
+
+                <div className="setting-item">
+                  <div>
+                    <strong>📊 参戦データの集計</strong>
+                    <p className="setting-desc">全 {records.length} 件の記録を登録中</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* 称号（ランク）一覧 */}
+              <div className="profile-section">
+                <h3>🏆 獲得できる称号一覧</h3>
+                <ul className="badge-list">
+                  <li className={summaryData.prefCount < 3 && records.length < 5 ? "active-badge" : ""}>
+                    🏠 ご近所オタク <small>（初期状態）</small>
+                  </li>
+                  <li className={summaryData.prefCount >= 3 || records.length >= 5 ? "active-badge" : ""}>
+                    🚃 フットワーク軽めオタク <small>（3都道府県 or 5回）</small>
+                  </li>
+                  <li className={summaryData.prefCount >= 10 || records.length >= 15 ? "active-badge" : ""}>
+                    🚄 遠征中級者オタク <small>（10都道府県 or 15回）</small>
+                  </li>
+                  <li className={summaryData.prefCount >= 20 || records.length >= 30 ? "active-badge" : ""}>
+                    ✈️ 旅するオタク <small>（20都道府県 or 30回）</small>
+                  </li>
+                  <li className={summaryData.prefCount >= 35 || records.length >= 50 ? "active-badge" : ""}>
+                    🗾 全国行脚オタク <small>（35都道府県 or 50回）</small>
+                  </li>
+                  <li className={summaryData.prefCount >= 47 ? "active-badge" : ""}>
+                    👑 全国制覇神オタク <small>（47都道府県全制覇）</small>
+                  </li>
+                </ul>
+              </div>
+
+              {/* ログアウトボタン */}
+              <div className="logout-area">
+                <button 
+                  className="btn-logout" 
+                  onClick={() => supabase.auth.signOut()}
+                >
+                  ログアウト 🚪
+                </button>
+              </div>
+            </div>
+          )}
 
       </div>
 
-      {/* 下部固定のボトムナビゲーションバー */}
+      {/* 下部固定ナビ */}
       <nav className="bottom-nav">
         <button 
           className={activeTab === "home" ? "active" : ""} 

@@ -532,3 +532,86 @@ ul {
   box-shadow: 1px 1px 0px #1a1a1a !important;
   cursor: pointer;
 }
+
+/* マイページ用のスタイル */
+.profile-page {
+  padding: 16px;
+}
+.profile-card {
+  background: white;
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  margin-bottom: 20px;
+}
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.avatar {
+  font-size: 32px;
+  background: #f0f0f0;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.user-email {
+  margin: 0 0 4px 0;
+  font-size: 16px;
+}
+.profile-section {
+  background: white;
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  margin-bottom: 20px;
+}
+.profile-section h3 {
+  margin-top: 0;
+  font-size: 14px;
+  color: #666;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 8px;
+}
+.setting-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+}
+.setting-desc {
+  margin: 2px 0 0 0;
+  font-size: 12px;
+  color: #888;
+}
+.badge-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.badge-list li {
+  padding: 8px;
+  font-size: 13px;
+  color: #ccc;
+}
+.badge-list li.active-badge {
+  color: #333;
+  font-weight: bold;
+}
+.logout-area {
+  text-align: center;
+  margin-top: 30px;
+}
+.btn-logout {
+  background: #ff4d4f;
+  color: white;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 20px;
+  font-weight: bold;
+  cursor: pointer;
+}

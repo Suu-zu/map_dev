@@ -4,6 +4,25 @@ import "./App.css";
 import LiveForm from "./components/LiveForm";
 import Map from "./components/Map";
 
+
+const getCoordinates = async (venueName) => {
+  try {
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(venueName)}`
+    );
+    const data = await response.json();
+    if (data && data.length > 0) {
+      return {
+        lat: parseFloat(data[0].lat),
+        lng: parseFloat(data[0].lon),
+      };
+    }
+  } catch (error) {
+    console.error("座標の取得に失敗しました:", error);
+  }
+  return { lat: null, lng: null };
+};
+
 function App() {
   const [artist, setArtist] = useState("");
   const [eventName, setEventName] = useState("");
@@ -22,6 +41,8 @@ function App() {
       return;
     }
 
+    const { lat, lng } = await getCoordinates(venue);
+
     if (isEditing) {
       const { error } = await supabase
         .from("live_records")
@@ -30,6 +51,8 @@ function App() {
           event_name: eventName,
           venue: venue,
           event_date: date,
+          latitude: lat,
+          longitude: lng,
         })
         .eq("id", editingId);
 
@@ -61,6 +84,8 @@ function App() {
           event_name: eventName,
           venue: venue,
           event_date: date,
+          latitude: lat,   
+          longitude: lng,
         },
       ]);
 
@@ -97,6 +122,8 @@ function App() {
     eventName: item.event_name,
     venue: item.venue,
     date: item.event_date,
+    latitude: item.latitude,   
+    longitude: item.longitude,
   }));
 
   setRecords(formattedData);
@@ -135,8 +162,8 @@ function App() {
     <div className="container">
       <h1>推し活マップ</h1>
 
-      <Map />
-      
+      <Map records={records} />
+
       <LiveForm
         artist={artist}
         setArtist={setArtist}

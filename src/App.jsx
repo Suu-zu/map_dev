@@ -3,7 +3,8 @@ import { supabase } from "./supabase";
 import "./App.css";
 import LiveForm from "./components/LiveForm";
 import Map from "./components/Map";
-
+import Login from "./pages/Login";
+import HomeLocation from "./pages/HomeLocation";
 
 const getCoordinates = async (venueName) => {
   try {
@@ -31,9 +32,12 @@ function App() {
 
   const [records, setRecords] = useState([]);
 
+
   const [editingId, setEditingId] = useState(null);
+  const [homeLocation, setHomeLocation] = useState(null);
+
   const [isEditing, setIsEditing] = useState(false);
-  
+
   const [activeTab, setActiveTab] = useState("home");
 
   // ★年別一覧画面を表示しているかどうかのフラグ
@@ -162,6 +166,39 @@ function App() {
     await fetchRecords();
   };
 
+  const checkHomeLocation = async (userId) => {
+    const { data, error } = await supabase
+      .from("home_location")
+      .select("*")
+      .eq("user_id", userId)
+      .limit(1);
+
+    if (error) {
+      console.error(error);
+      return;
+    }
+
+    setHasHome(data.length > 0);
+    setLoadingHome(false);
+  };
+
+  const fetchHomeLocation = async (userId) => {
+    const { data, error } = await supabase
+      .from("home_location")
+      .select("*")
+      .eq("user_id", userId)
+      .single();
+
+    if (error) {
+      console.error(error);
+      return;
+    }
+
+    console.log(data);
+    
+    setHomeLocation(data);
+  };
+
   // ★年ごとにデータをグループ化する処理
   const recordsByYear = records.reduce((acc, record) => {
     // 日付（YYYY-MM-DD や YYYY/MM/DD）から「年」を取り出す
@@ -179,12 +216,60 @@ function App() {
   // モーダル（登録フォーム）の開閉フラグ
   const [showFormModal, setShowFormModal] = useState(false);
 
+  const [session, setSession] = useState(null);
+
+  const [hasHome, setHasHome] = useState(false);
+  const [loadingHome, setLoadingHome] = useState(true);
+  
   useEffect(() => {
-  fetchRecords();
+    fetchRecords();
+    
+
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+
+      if (data.session) {
+        checkHomeLocation(data.session.user.id);
+        fetchHomeLocation(data.session.user.id); 
+      } else {
+        setLoadingHome(false);
+      }
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+          setSession(session);
+
+          if (session) {
+            checkHomeLocation(session.user.id);
+            fetchHomeLocation(session.user.id);
+          } else {
+            setLoadingHome(false);
+          }
+        });
+
+    return () => subscription.unsubscribe();
   }, []);
 
+  if (!session) {
+  return <Login />;
+}
 
-  return (
+  if (loadingHome) {
+    return <p>読み込み中...</p>;
+  }
+
+  if (!hasHome) {
+    return (
+      <HomeLocation
+        session={session}
+        onComplete={() => setHasHome(true)}
+      />
+    );
+  }
+
+return (
     <div className="container">
       {/* 画面の上部・コンテンツエリア */}
       <div className="main-content">
@@ -245,7 +330,7 @@ function App() {
                   <> 
                     {/* ヘッダーエリア */}
                     <div className="top-header">
-                      <span className="user-name">👤 推し活太郎</span>
+                      <span className="user-name">👤 推し活太朗</span>
                       <span className="user-badge">🏆 旅するオタク</span>
                     </div>
 
@@ -321,7 +406,10 @@ function App() {
             
             {/* 1. メインの地図表示 */}
             <div className="map-container-full">
-              <Map records={records} />
+              <Map 
+                records={records}
+                homeLocation={homeLocation}
+              />
             </div>
 
             {/* 2. 右下の浮遊アクションボタン（＋） */}

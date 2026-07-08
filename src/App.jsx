@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "./supabase";
 import "./App.css";
 import LiveForm from "./components/LiveForm";
+import Map from "./components/Map";
 
 function App() {
   const [artist, setArtist] = useState("");
@@ -134,6 +135,8 @@ function App() {
     <div className="container">
       <h1>推し活マップ</h1>
 
+      <Map />
+      
       <LiveForm
         artist={artist}
         setArtist={setArtist}

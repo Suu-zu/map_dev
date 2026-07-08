@@ -110,6 +110,7 @@ function App() {
     setEventName("");
     setVenue("");
     setDate("");
+    setShowFormModal(false); 
   };
 
   const fetchRecords = async () => {
@@ -174,6 +175,9 @@ function App() {
 
   // 年を降順（新しい年が上）に並べ替え
   const sortedYears = Object.keys(recordsByYear).sort((a, b) => b - a);
+
+  // モーダル（登録フォーム）の開閉フラグ
+  const [showFormModal, setShowFormModal] = useState(false);
 
   useEffect(() => {
   fetchRecords();
@@ -310,47 +314,53 @@ function App() {
                 )}
               </div>
             )}
-            
-            {/* <LiveForm
-              artist={artist}
-              setArtist={setArtist}
-              eventName={eventName}
-              setEventName={setEventName}
-              venue={venue}
-              setVenue={setVenue}
-              date={date}
-              setDate={setDate}
-              handleRegister={handleRegister}
-              isEditing={isEditing}
-            />
-
-            <h2>登録済みライブ</h2>
-            {records.length === 0 ? (
-              <p>まだ登録されていません。</p>
-            ) : (
-              <ul>
-                {records.map((record) => (
-                  <li key={record.id} className="record-card">
-                    <strong>🎤 {record.artist}</strong><br />
-                    🎫 {record.eventName}<br />
-                    📍 {record.venue}<br />
-                    📅 {record.date}<br /><br />
-                    <button onClick={() => handleEdit(record)}>編集</button>{" "}
-                    <button onClick={() => handleDelete(record.id)}>削除</button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        )}*/}
 
         {/* ② マップタブが選ばれているとき */}
         {activeTab === "map" && (
           <div className="tab-page map-page">
-            <h1>ライブマップ 🗺️</h1>
-            <Map records={records} />
+            
+            {/* 1. メインの地図表示 */}
+            <div className="map-container-full">
+              <Map records={records} />
+            </div>
+
+            {/* 2. 右下の浮遊アクションボタン（＋） */}
+            <button 
+              className="fab-button" 
+              onClick={() => setShowFormModal(true)}
+            >
+              ＋
+            </button>
+
+            {/* 3. ＋ボタンを押した時に出るモーダル（登録フォーム） */}
+            {showFormModal && (
+              <div className="modal-overlay" onClick={() => setShowFormModal(false)}>
+                <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                  <div className="modal-header">
+                    <h3>{isEditing ? "ライブ記録の編集 ✏️" : "新規ライブ登録 🎤"}</h3>
+                    <button className="btn-close" onClick={() => setShowFormModal(false)}>✕</button>
+                  </div>
+
+                  <LiveForm
+                    artist={artist}
+                    setArtist={setArtist}
+                    eventName={eventName}
+                    setEventName={setEventName}
+                    venue={venue}
+                    setVenue={setVenue}
+                    date={date}
+                    setDate={setDate}
+                    handleRegister={handleRegister}
+                    isEditing={isEditing}
+                  />
+                </div>
+              </div>
+            )}
+
           </div>
         )}
+        
+        
 
         {/* ③ マイページタブが選ばれているとき */}
         {activeTab === "profile" && (

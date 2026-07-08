@@ -1,4 +1,5 @@
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import MarkerClusterGroup from "react-leaflet-cluster";
 import "leaflet/dist/leaflet.css";
 
 import L from "leaflet";
@@ -18,7 +19,7 @@ function Map({ records = [] }) {
             center={[35.681236, 139.767125]}
             zoom={6}
             style={{
-                height: "400px",
+                height: "100%",
                 width: "100%",
                 borderRadius: "12px",
             }}
@@ -27,6 +28,7 @@ function Map({ records = [] }) {
             attribution='&copy; OpenStreetMap contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
+        <MarkerClusterGroup>
         {/* 登録されたライブデータから動的にピンを表示 */}
         {records.map((record) => {
             if (!record.latitude || !record.longitude) return null;
@@ -45,6 +47,7 @@ function Map({ records = [] }) {
                 </Marker>
             );
         })}
+        </MarkerClusterGroup>
         </MapContainer>
     );
 }

@@ -1,10 +1,11 @@
-import { useState, useEffect, useMemo } from "react"; // ★ useMemo を追加
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "./supabase";
 import "./App.css";
 import LiveForm from "./components/LiveForm";
 import Map from "./components/Map";
 import Login from "./pages/Login";
 import HomeLocation from "./pages/HomeLocation";
+import LoadingAnimation from "./components/LoadingAnimation"; // 🎟️ スプラッシュコンポーネント
 
 // 2点間の直線距離（km）を計算する関数
 function calculateDistance(lat1, lon1, lat2, lon2) {
@@ -40,10 +41,14 @@ const getCoordinates = async (venueName) => {
 };
 
 function App() {
+  // 🎟️ サイトを開いた時の「Touch to Screen」演出を表示するかどうかのフラグ
+  const [showSplash, setShowSplash] = useState(true);
+
   const [artist, setArtist] = useState("");
   const [eventName, setEventName] = useState("");
   const [venue, setVenue] = useState("");
   const [date, setDate] = useState("");
+  const [transportation, setTransportation] = useState("");
 
   const [records, setRecords] = useState([]);
 
@@ -54,12 +59,9 @@ function App() {
 
   const [activeTab, setActiveTab] = useState("home");
 
-  // ★年別一覧画面を表示しているかどうかのフラグ
   const [showAllRecords, setShowAllRecords] = useState(false);
-  // ★開いている年（初期状態は最新の2026年を開くなど）
   const [openYear, setOpenYear] = useState(null);
   
-  // モーダル（登録フォーム）の開閉フラグ
   const [showFormModal, setShowFormModal] = useState(false);
 
   const [session, setSession] = useState(null);
@@ -67,16 +69,16 @@ function App() {
   const [hasHome, setHasHome] = useState(false);
   const [loadingHome, setLoadingHome] = useState(true);
 
-  // ★ 自動計算（サマリー用データ）の定義
+  // ★ サマリー用データの自動計算
   const summaryData = useMemo(() => {
     const currentYear = new Date().getFullYear().toString();
 
-    // ① 今年の遠征回数
+    // 今年の遠征回数
     const thisYearCount = records.filter(
       (r) => r.date && r.date.startsWith(currentYear)
     ).length;
 
-    // ② 総移動距離（往復）
+    // 総移動距離（往復）
     let totalDistance = 0;
     if (homeLocation && homeLocation.latitude && homeLocation.longitude) {
       records.forEach((r) => {
@@ -94,7 +96,7 @@ function App() {
 
     const earthLaps = (totalDistance / 40075).toFixed(2);
 
-    // ③ 都道府県の判定マッピング
+    // 都道府県の判定マッピング
     const prefKeywords = {
       北海道: ["北海道", "札幌", "函館"],
       青森県: ["青森"], 岩手県: ["岩手", "盛岡"], 宮城県: ["宮城", "仙台"], 秋田県: ["秋田"], 山形県: ["山形"], 福島県: ["福島"],
@@ -119,13 +121,11 @@ function App() {
     const visitedPrefectures = new Set();
 
     records.forEach((r) => {
-      // 1. 明示的に prefecture が指定されていればそれを使う
       if (r.prefecture) {
         visitedPrefectures.add(r.prefecture);
         return;
       }
 
-      // 2. 会場名（venue）から該当する都道府県をキーワード検索
       if (r.venue) {
         let matched = false;
         for (const [pref, keywords] of Object.entries(prefKeywords)) {
@@ -142,28 +142,19 @@ function App() {
     const prefCount = visitedPrefectures.size;
     const prefPercentage = Math.round((prefCount / 47) * 100);
 
-    // 🏆 称号の自動判定ロジック
-  let userBadge = "🏠 ご近所オタク";
-  if (prefCount >= 47) {
-    userBadge = "👑 全国制覇神オタク";
-  } else if (prefCount >= 35 || records.length >= 50) {
-    userBadge = "🗾 全国行脚オタク";
-  } else if (prefCount >= 20 || records.length >= 30) {
-    userBadge = "✈️ 旅するオタク";
-  } else if (prefCount >= 10 || records.length >= 15) {
-    userBadge = "🚄 遠征中級者オタク";
-  } else if (prefCount >= 3 || records.length >= 5) {
-    userBadge = "🚃 フットワーク軽めオタク";
-  }
-
-  return {
-    thisYearCount,
-    totalDistance: Math.round(totalDistance).toLocaleString(),
-    earthLaps,
-    prefCount,
-    prefPercentage,
-    userBadge, // ★ 追加
-  };
+    // 称号の自動判定
+    let userBadge = "🏠 ご近所オタク";
+    if (prefCount >= 47) {
+      userBadge = "👑 全国制覇神オタク";
+    } else if (prefCount >= 35 || records.length >= 50) {
+      userBadge = "🗾 全国行脚オタク";
+    } else if (prefCount >= 20 || records.length >= 30) {
+      userBadge = "✈️ 旅するオタク";
+    } else if (prefCount >= 10 || records.length >= 15) {
+      userBadge = "🚄 遠征中級者オタク";
+    } else if (prefCount >= 3 || records.length >= 5) {
+      userBadge = "🚃 フットワーク軽めオタク";
+    }
 
     return {
       thisYearCount,
@@ -171,13 +162,13 @@ function App() {
       earthLaps,
       prefCount,
       prefPercentage,
+      userBadge,
     };
   }, [records, homeLocation]);
 
-  // ★ NEXT LIVE（次の現場）の自動取得
+  // NEXT LIVE（次の現場）の自動取得
   const nextLive = useMemo(() => {
-    const today = new Date().toISOString().split("T")[0]; // 今日の日付 YYYY-MM-DD
-    // 今日以降のライブを日付順にソート
+    const today = new Date().toISOString().split("T")[0];
     const upcoming = records
       .filter((r) => r.date && r.date >= today)
       .sort((a, b) => new Date(a.date) - new Date(b.date));
@@ -211,6 +202,7 @@ function App() {
           event_name: eventName,
           venue: venue,
           event_date: date,
+          transportation: transportation, 
           latitude: lat,
           longitude: lng,
         })
@@ -228,6 +220,7 @@ function App() {
       setEventName("");
       setVenue("");
       setDate("");
+      setTransportation(""); 
 
       setEditingId(null);
       setIsEditing(false);
@@ -243,6 +236,7 @@ function App() {
           event_name: eventName,
           venue: venue,
           event_date: date,
+          transportation: transportation, 
           latitude: lat,   
           longitude: lng,
         },
@@ -260,7 +254,38 @@ function App() {
     setEventName("");
     setVenue("");
     setDate("");
+    setTransportation(""); 
     setShowFormModal(false); 
+  };
+
+  const handleEdit = (record) => {
+    setArtist(record.artist);
+    setEventName(record.eventName);
+    setVenue(record.venue);
+    setDate(record.date);
+    setTransportation(record.transportation || "");
+    setEditingId(record.id);
+    setIsEditing(true);
+    setShowFormModal(true);
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("このライブ記録を削除してもよろしいですか？")) {
+      return;
+    }
+
+    const { error } = await supabase
+      .from("live_records")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      alert("削除に失敗しました");
+      console.error(error);
+      return;
+    }
+
+    fetchRecords();
   };
 
   const fetchRecords = async () => {
@@ -280,6 +305,7 @@ function App() {
       eventName: item.event_name,
       venue: item.venue,
       date: item.event_date,
+      transportation: item.transportation,
       latitude: item.latitude,   
       longitude: item.longitude,
     }));
@@ -318,7 +344,6 @@ function App() {
     setHomeLocation(data);
   };
 
-  // 年ごとにデータをグループ化
   const recordsByYear = records.reduce((acc, record) => {
     const year = record.date ? record.date.substring(0, 4) : "その他";
     if (!acc[year]) {
@@ -360,14 +385,22 @@ function App() {
     return () => subscription.unsubscribe();
   }, []);
 
+  // 1️⃣ 一番最初：チケットもぎりスプラッシュ画面を表示
+  if (showSplash) {
+    return <LoadingAnimation onFinish={() => setShowSplash(false)} />;
+  }
+
+  // 2️⃣ ログインしてない場合：ログイン画面を表示
   if (!session) {
     return <Login />;
   }
 
+  // 3️⃣ 自宅登録処理中
   if (loadingHome) {
-    return <p>読み込み中...</p>;
+    return <p style={{ textAlign: "center", marginTop: "50px" }}>読み込み中...</p>;
   }
 
+  // 4️⃣ 自宅が未登録の場合：自宅登録画面を表示
   if (!hasHome) {
     return (
       <HomeLocation
@@ -377,16 +410,14 @@ function App() {
     );
   }
 
+  // 5️⃣ メイン画面（ログイン完了後）
   return (
     <div className="container">
-      {/* 画面の上部・コンテンツエリア */}
       <div className="main-content">
         
-        {/* ① ホームタブが選ばれているとき */}
+        {/* ① ホームタブ */}
         {activeTab === "home" && (
           <div className="tab-page">
-
-            {/* ▼ 「すべて見る」画面が開いている時 */}
             {showAllRecords ? (
               <div className="all-records-page">
                 <div className="page-header">
@@ -421,6 +452,12 @@ function App() {
                                 <div className="card-body">
                                   <p className="event-title">🎫 {record.eventName}</p>
                                   <p className="venue-name">📍 {record.venue}</p>
+                                  {record.transportation && <p className="transport-info">🚃 {record.transportation}</p>}
+                                </div>
+
+                                <div className="recent-actions">
+                                  <button className="btn-edit-sm" onClick={() => handleEdit(record)}>✏️</button>
+                                  <button className="btn-delete-sm" onClick={() => handleDelete(record.id)}>🗑️</button>
                                 </div>
                               </li>
                             ))}
@@ -432,16 +469,11 @@ function App() {
                 </div>
               </div>
             ) : (
-              /* ▼ 通常のホームダッシュボード画面 */
               <> 
-                {/* ヘッダーエリア */}
-                  <div className="top-header">
-                    <span className="user-name">👤 推し活太朗</span>
-                    {/* ★ 自動変化する称号 */}
-                    <span className="user-badge">{summaryData.userBadge}</span>
-                  </div>
+                <div className="top-header">
+                  <span className="user-badge">{summaryData.userBadge}</span>
+                </div>
 
-                {/* 1. 次の現場 */}
                 <div className="next-live-card">
                   <div className="card-tag">NEXT LIVE 🎤</div>
                   {nextLive ? (
@@ -454,7 +486,6 @@ function App() {
                   )}
                 </div>
 
-                {/* 2. 推し活サマリー */}
                 <div className="summary-grid">
                   <div className="summary-box">
                     <span className="box-label">総参戦回数</span>
@@ -471,7 +502,6 @@ function App() {
                   </div>
                 </div>
 
-                {/* 3. 都道府県制覇ミニ進捗 */}
                 <div className="prefecture-card">
                   <div className="pref-header">
                     <span>🗾 都道府県制覇</span>
@@ -485,7 +515,6 @@ function App() {
                   </div>
                 </div>
 
-                {/* 4. 最近行ったライブ（直近3件） */}
                 <div className="recent-section">
                   <div className="section-header">
                     <h3>最近行ったライブ</h3>
@@ -505,6 +534,10 @@ function App() {
                             <strong>{record.artist}</strong>
                             <span>@{record.venue}</span>
                           </div>
+                          <div className="recent-actions">
+                            <button className="btn-edit-sm" onClick={() => handleEdit(record)}>✏️</button>
+                            <button className="btn-delete-sm" onClick={() => handleDelete(record.id)}>🗑️</button>
+                          </div>
                         </li>
                       ))}
                     </ul>
@@ -515,7 +548,7 @@ function App() {
           </div>
         )}
 
-        {/* ② マップタブが選ばれているとき */}
+        {/* ② マップタブ */}
         {activeTab === "map" && (
           <div className="tab-page map-page">
             <div className="map-container-full">
@@ -527,7 +560,15 @@ function App() {
 
             <button 
               className="fab-button" 
-              onClick={() => setShowFormModal(true)}
+              onClick={() => {
+                setIsEditing(false);
+                setArtist("");
+                setEventName("");
+                setVenue("");
+                setDate("");
+                setTransportation("");
+                setShowFormModal(true);
+              }}
             >
               ＋
             </button>
@@ -549,6 +590,8 @@ function App() {
                     setVenue={setVenue}
                     date={date}
                     setDate={setDate}
+                    transportation={transportation}          
+                    setTransportation={setTransportation}    
                     handleRegister={handleRegister}
                     isEditing={isEditing}
                   />
@@ -558,83 +601,78 @@ function App() {
           </div>
         )}
 
-        {/* ③ マイページタブが選ばれているとき */}
-          {activeTab === "profile" && (
-            <div className="tab-page profile-page">
-              <h2>マイページ 👤</h2>
+        {/* ③ マイページタブ */}
+        {activeTab === "profile" && (
+          <div className="tab-page profile-page">
+            <h2>マイページ 👤</h2>
 
-              {/* ユーザープロフィールカード */}
-              <div className="profile-card">
-                <div className="user-info">
-                  
-                  <div>
-                    <h3 className="user-email">{session?.user?.email || "ユーザー"}</h3>
-                    <span className="user-badge">{summaryData.userBadge}</span>
-                  </div>
+            <div className="profile-card">
+              <div className="user-info">
+                <div>
+                  <h3 className="user-email">{session?.user?.email || "ユーザー"}</h3>
+                  <span className="user-badge">{summaryData.userBadge}</span>
                 </div>
-              </div>
-
-              {/* 設定・統計リスト */}
-              <div className="profile-section">
-                <h3>アカウント・データ設定</h3>
-                
-                <div className="setting-item">
-                  <div>
-                    <strong>🏠 自宅の位置情報</strong>
-                    <p className="setting-desc">遠征距離の基準になる自宅の変更</p>
-                  </div>
-                  <button 
-                    className="btn-secondary" 
-                    onClick={() => setHasHome(false)}
-                  >
-                    変更する
-                  </button>
-                </div>
-
-                <div className="setting-item">
-                  <div>
-                    <strong>📊 参戦データの集計</strong>
-                    <p className="setting-desc">全 {records.length} 件の記録を登録中</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* 称号（ランク）一覧 */}
-              <div className="profile-section">
-                <h3>🏆 獲得できる称号一覧</h3>
-                <ul className="badge-list">
-                  <li className={summaryData.prefCount < 3 && records.length < 5 ? "active-badge" : ""}>
-                    🏠 ご近所オタク <small>（初期状態）</small>
-                  </li>
-                  <li className={summaryData.prefCount >= 3 || records.length >= 5 ? "active-badge" : ""}>
-                    🚃 フットワーク軽めオタク <small>（3都道府県 or 5回）</small>
-                  </li>
-                  <li className={summaryData.prefCount >= 10 || records.length >= 15 ? "active-badge" : ""}>
-                    🚄 遠征中級者オタク <small>（10都道府県 or 15回）</small>
-                  </li>
-                  <li className={summaryData.prefCount >= 20 || records.length >= 30 ? "active-badge" : ""}>
-                    ✈️ 旅するオタク <small>（20都道府県 or 30回）</small>
-                  </li>
-                  <li className={summaryData.prefCount >= 35 || records.length >= 50 ? "active-badge" : ""}>
-                    🗾 全国行脚オタク <small>（35都道府県 or 50回）</small>
-                  </li>
-                  <li className={summaryData.prefCount >= 47 ? "active-badge" : ""}>
-                    👑 全国制覇神オタク <small>（47都道府県全制覇）</small>
-                  </li>
-                </ul>
-              </div>
-
-              {/* ログアウトボタン */}
-              <div className="logout-area">
-                <button 
-                  className="btn-logout" 
-                  onClick={() => supabase.auth.signOut()}
-                >
-                  ログアウト 🚪
-                </button>
               </div>
             </div>
-          )}
+
+            <div className="profile-section">
+              <h3>アカウント・データ設定</h3>
+              
+              <div className="setting-item">
+                <div>
+                  <strong>🏠 自宅の位置情報</strong>
+                  <p className="setting-desc">遠征距離の基準になる自宅の変更</p>
+                </div>
+                <button 
+                  className="btn-secondary" 
+                  onClick={() => setHasHome(false)}
+                >
+                  変更する
+                </button>
+              </div>
+
+              <div className="setting-item">
+                <div>
+                  <strong>📊 参戦データの集計</strong>
+                  <p className="setting-desc">全 {records.length} 件の記録を登録中</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="profile-section">
+              <h3>🏆 獲得できる称号一覧</h3>
+              <ul className="badge-list">
+                <li className={summaryData.prefCount < 3 && records.length < 5 ? "active-badge" : ""}>
+                  🏠 ご近所オタク <small>（初期状態）</small>
+                </li>
+                <li className={summaryData.prefCount >= 3 || records.length >= 5 ? "active-badge" : ""}>
+                  🚃 フットワーク軽めオタク <small>（3都道府県 or 5回）</small>
+                </li>
+                <li className={summaryData.prefCount >= 10 || records.length >= 15 ? "active-badge" : ""}>
+                  🚄 遠征中級者オタク <small>（10都道府県 or 15回）</small>
+                </li>
+                <li className={summaryData.prefCount >= 20 || records.length >= 30 ? "active-badge" : ""}>
+                  ✈️ 旅するオタク <small>（20都道府県 or 30回）</small>
+                </li>
+                <li className={summaryData.prefCount >= 35 || records.length >= 50 ? "active-badge" : ""}>
+                  🗾 全国行脚オタク <small>（35都道府県 or 50回）</small>
+                </li>
+                <li className={summaryData.prefCount >= 47 ? "active-badge" : ""}>
+                  👑 全国制覇神オタク <small>（47都道府県全制覇）</small>
+                </li>
+              </ul>
+            </div>
+
+            <div className="logout-area">
+              <button 
+                className="btn-logout" 
+                onClick={() => supabase.auth.signOut()}
+              >
+                ログアウト 🚪
+              </button>
+            </div>
+          </div>
+        )}
 
       </div>
 

@@ -1,0 +1,164 @@
+/* 全体背景：ラベンダーピンクの幻想的なグラデーション */
+.splash-container {
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(135deg, #2a1b3d 0%, #442850 50%, #5c2c48 100%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  cursor: pointer;
+  overflow: hidden;
+  user-select: none;
+}
+
+/* 画面全体を包む白いもや（初期状態） */
+.soft-mist-overlay {
+  position: absolute;
+  inset: -20px;
+  background: radial-gradient(
+    circle at center,
+    rgba(255, 255, 255, 1) 0%,
+    rgba(255, 240, 248, 0.9) 50%,
+    rgba(255, 225, 238, 0) 75%
+  );
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 1s ease-out, transform 1s ease-out;
+  transform: scale(0.5);
+  filter: blur(25px); /* ぽわぽわした柔らかい質感 */
+}
+
+/* タップした時に白いもやが画面全体を真っ白に包み込む */
+.splash-container.active .soft-mist-overlay {
+  opacity: 1;
+  transform: scale(2.8);
+}
+
+/* チケット全体のベース */
+.ticket-wrapper {
+  position: relative;
+  display: flex;
+  width: 320px;
+  height: 160px;
+  filter: drop-shadow(0 10px 20px rgba(255, 182, 193, 0.3));
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+              opacity 1s ease-out,
+              filter 1s ease-out;
+  z-index: 2;
+}
+
+/* 🖱️ カーソルを乗せたときの「ぽちっ（ふんわり浮き上がり）」 */
+.ticket-wrapper:hover {
+  transform: scale(1.05) translateY(-4px) rotate(-1deg);
+  filter: drop-shadow(0 15px 30px rgba(255, 182, 193, 0.5));
+}
+
+/* 🖱️ クリックした瞬間の「ポチッ（押し込み）」 */
+.ticket-wrapper:active {
+  transform: scale(0.97) translateY(1px);
+}
+
+/* 🎟️ もぎったあと：最後に向けてふわ〜っと完全に透明（フェードアウト）にする */
+.ticket-wrapper.torn {
+  opacity: 0;
+  filter: blur(8px);
+  pointer-events: none;
+}
+
+/* チケット（左：本体） */
+.ticket-body {
+  flex: 1;
+  background: linear-gradient(135deg, #fffafd 0%, #ffeaf2 100%);
+  border-radius: 16px 0 0 16px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border: 2px dashed #ffc0cb;
+  border-right: none;
+  position: relative;
+  color: #5c3a4d;
+}
+
+/* チケット（右：もぎり） */
+.ticket-stub {
+  width: 90px;
+  background: linear-gradient(135deg, #ffeaf2 0%, #ffd8e6 100%);
+  border-radius: 0 16px 16px 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border: 2px dashed #ffc0cb;
+  border-left: none;
+  position: relative;
+  transform-origin: left bottom;
+  transition: all 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+/* くぼみ（切り込み） */
+.ticket-body::after,
+.ticket-stub::before {
+  content: "";
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  background: #362145;
+  border-radius: 50%;
+}
+.ticket-body::after { right: -8px; top: -8px; }
+.ticket-stub::before { left: -8px; bottom: -8px; }
+
+/* テキストデザイン */
+.ticket-decor-top {
+  font-size: 0.7rem;
+  color: #ff69b4;
+  letter-spacing: 2px;
+  font-weight: bold;
+}
+
+.ticket-title {
+  font-size: 1.5rem;
+  font-weight: 900;
+  background: linear-gradient(45deg, #ff5c8d, #ff94b9);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin: 2px 0;
+}
+
+.ticket-sub {
+  font-size: 0.75rem;
+  color: #8c687b;
+}
+
+.tap-text {
+  font-size: 0.7rem;
+  color: #ff4081;
+  font-weight: bold;
+  animation: pulse 1.6s infinite ease-in-out;
+  margin-top: 6px;
+}
+
+.stub-text {
+  writing-mode: vertical-rl;
+  font-weight: bold;
+  letter-spacing: 3px;
+  color: #e0407b;
+  font-size: 0.8rem;
+}
+
+.stub-icon {
+  font-size: 1.2rem;
+  margin-top: 8px;
+}
+
+/* 🎟️ もぎった時の動き（右下へ離れつつ透ける） */
+.ticket-wrapper.torn .ticket-stub {
+  transform: rotate(20deg) translate(30px, 20px);
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.5; transform: scale(0.98); }
+  50% { opacity: 1; transform: scale(1.02); }
+}

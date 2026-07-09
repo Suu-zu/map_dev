@@ -1,0 +1,121 @@
+/* 全体背景：ピンクと紫のふわっとしたグラデーション */
+.login-container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #ffd1dc 0%, #e2d4f7 100%);
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+/* 中央のかわいいカード */
+.login-card {
+  background: #ffffff;
+  width: 100%;
+  max-width: 380px;
+  padding: 35px 25px;
+  border-radius: 28px; /* 丸み大きめ */
+  box-shadow: 0 10px 25px rgba(255, 182, 193, 0.4); /* ふんわりピンクの影 */
+  text-align: center;
+}
+
+/* ヘッダー部分 */
+.login-header .login-icon {
+  font-size: 3.2rem;
+  display: inline-block;
+  margin-bottom: 8px;
+  animation: bounce 2s infinite; /* ぷかぷか動くアニメーション */
+}
+
+.login-header h2 {
+  margin: 0;
+  color: #ff6b81;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.login-subtext {
+  font-size: 0.85rem;
+  color: #888;
+  margin-top: 6px;
+  margin-bottom: 24px;
+}
+
+/* 入力欄 */
+.login-form .input-group {
+  text-align: left;
+  margin-bottom: 16px;
+}
+
+.login-form label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: bold;
+  color: #666;
+  margin-bottom: 6px;
+  margin-left: 4px;
+}
+
+.login-form input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #ffe4e8;
+  border-radius: 16px;
+  background-color: #fff9fa;
+  font-size: 0.95rem;
+  box-sizing: border-box;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+/* フォーカスした時（クリック時）にピンクに光る */
+.login-form input:focus {
+  border-color: #ff8fa3;
+  background-color: #ffffff;
+  box-shadow: 0 0 8px rgba(255, 143, 163, 0.3);
+}
+
+/* ログイン・登録ボタン */
+.btn-login-submit {
+  width: 100%;
+  padding: 14px;
+  margin-top: 10px;
+  border: none;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #ff758c 0%, #ff7eb3 100%);
+  color: white;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 6px 15px rgba(255, 117, 140, 0.3);
+  transition: transform 0.1s ease, box-shadow 0.2s ease;
+}
+
+.btn-login-submit:active {
+  transform: scale(0.97);
+}
+
+.btn-login-submit:disabled {
+  opacity: 0.6;
+}
+
+/* 切替ボタン */
+.login-footer {
+  margin-top: 20px;
+}
+
+.btn-toggle {
+  background: none;
+  border: none;
+  color: #ff6b81;
+  font-size: 0.8rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* アイコンがぷかぷか浮かぶアニメーション */
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}

@@ -615,3 +615,107 @@ ul {
   font-weight: bold;
   cursor: pointer;
 }
+
+/* 🗺️ マップフィルターバー */
+.map-filter-bar {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000; /* マップの上に重ねる */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 90%;
+  max-width: 400px;
+}
+
+.tab-buttons {
+  display: flex;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 4px;
+  border-radius: 25px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(5px);
+  width: 100%;
+}
+
+.tab-buttons button {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 8px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: bold;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tab-buttons button.active {
+  background: #ff4757;
+  color: white;
+  box-shadow: 0 2px 8px rgba(255, 71, 87, 0.4);
+}
+
+.filter-select {
+  background: rgba(255, 255, 255, 0.95);
+  border: 2px solid #ff4757;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-weight: bold;
+  color: #333;
+  outline: none;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  cursor: pointer;
+}
+
+/* カード内のボタン配置 */
+.card-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed #eee;
+}
+
+.btn-edit, .btn-delete {
+  padding: 4px 10px;
+  font-size: 0.8rem;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-edit {
+  background-color: #e3f2fd;
+  color: #1976d2;
+}
+
+.btn-delete {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+/* 最近行ったライブの小さめボタン */
+.recent-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.recent-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.btn-edit-sm, .btn-delete-sm {
+  background: none;
+  border: none;
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 4px;
+}

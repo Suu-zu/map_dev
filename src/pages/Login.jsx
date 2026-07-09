@@ -1,64 +1,82 @@
 import { useState } from "react";
 import { supabase } from "../supabase";
+import "./Login.css";
 
 function Login() {
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const handleLogin = async () => {
-    const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-    });
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-    if (error) {
-        alert(error.message);
-        return;
+  const handleAuth = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    if (isSignUp) {
+      const { error } = await supabase.auth.signUp({ email, password });
+      if (error) alert(error.message);
+      else alert("確認メールを送信しました！メールをご確認ください 💌");
+    } else {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) alert(error.message);
     }
+    setLoading(false);
+  };
 
-    alert("ログインしました！");
-    };
-
-    const handleSignUp = async () => {
-    const { error } = await supabase.auth.signUp({
-        email,
-        password,
-    });
-
-    if (error) {
-        alert(error.message);
-        return;
-    }
-
-    alert("アカウントを作成しました！");
-    };
-
-    return (
-        <div className="login-container">
-            <h1>🎤 推し活マップ</h1>
-
-        <input
-            type="email"
-            placeholder="メールアドレス"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-        />
-
-        <input
-            type="password"
-            placeholder="パスワード"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-        />
-
-        <button onClick={handleLogin}>
-            ログイン
-        </button>
-
-        <button onClick={handleSignUp}>
-            新規登録
-        </button>
+  return (
+    <div className="login-container">
+      <div className="login-card">
+        {/* アイコンとタイトル */}
+        <div className="login-header">
+          <p className="login-subtext">
+       
+          </p>
         </div>
-    );
-    }
+
+        {/* フォームエリア */}
+        <form onSubmit={handleAuth} className="login-form">
+          <div className="input-group">
+            <label>メールアドレス</label>
+            <input
+              type="email"
+              placeholder="example@email.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="input-group">
+            <label>パスワード</label>
+            <input
+              type="password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
+
+          <button type="submit" className="btn-login-submit" disabled={loading}>
+            {loading ? "送信中... " : isSignUp ? "登録する" : "ログイン"}
+          </button>
+        </form>
+
+        {/* 切替ボタン */}
+        <div className="login-footer">
+          <button
+            type="button"
+            className="btn-toggle"
+            onClick={() => setIsSignUp(!isSignUp)}
+          >
+            {isSignUp
+              ? "すでにアカウントをお持ちの方（ログイン）"
+              : "はじめての方はこちら（新規登録）"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default Login;

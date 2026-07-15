@@ -367,11 +367,11 @@ ul {
 .btn-back {
   background: #ffffff !important;
   color: #1a1a1a !important;
-  border: 2px solid #1a1a1a !important;
+  border: 2px solid #464646 !important;
   padding: 6px 12px !important;
   font-size: 12px !important;
   border-radius: 10px !important;
-  box-shadow: 2px 2px 0px #1a1a1a !important;
+  box-shadow: 1px 1px 0px #626262 !important;
 }
 
 .accordion-list {
@@ -381,11 +381,11 @@ ul {
 }
 
 .accordion-item {
-  border: 2px solid #1a1a1a;
+  border: 2px solid #464646;
   border-radius: 14px;
   overflow: hidden;
   background: #ffffff;
-  box-shadow: 2px 2px 0px #1a1a1a;
+  box-shadow: 1px 1px 0px #808080;
 }
 
 .accordion-header {
@@ -451,7 +451,7 @@ ul {
   height: 60px;
   border-radius: 50%;
 /* 例：はっきりした可愛いピンクの単色にする場合 */
-  background: #fdbbd2 !important;
+  background: #f85f97 !important;
   color: #ffffff !important;
   font-size: 32px !important;
   font-weight: 900;
@@ -487,8 +487,9 @@ ul {
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000;
+  z-index: 1500;
   padding: 16px;
+  padding-bottom: 80px;
 }
 
 .modal-content {
@@ -519,7 +520,7 @@ ul {
 }
 
 .btn-close {
-  background: #f0f0f0 !important;
+  background: #ffffff !important;
   border: 2px solid #1a1a1a !important;
   border-radius: 50% !important;
   width: 30px;
@@ -529,7 +530,7 @@ ul {
   align-items: center;
   justify-content: center;
   color: #1a1a1a !important;
-  box-shadow: 1px 1px 0px #1a1a1a !important;
+  box-shadow:0px 0px 0px #1a1a1a !important;
   cursor: pointer;
 }
 
@@ -718,4 +719,330 @@ ul {
   font-size: 0.9rem;
   cursor: pointer;
   padding: 4px;
+}
+
+/* ホーム上部のレイアウト調整（バッジとハートを横並びに） */
+.top-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+/* かわいいハートボタンのデザイン */
+.btn-heart-list {
+  background: #fff0f5; /* ふんわりミルキーピンク */
+  border: 2px solid #ffb6c1; /* 桜色ボーダー */
+  font-size: 1.6rem;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%; /* まんまるに */
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(255, 182, 193, 0.4);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* ホバー（タップ）したときの動き */
+.btn-heart-list:hover {
+  background-color: #ffe1f8;
+  box-shadow: 0 6px 15px rgba(255, 182, 193, 0.6);
+  /* ドキドキアニメーションを開始！ */
+  animation: heartbeat 0.8s infinite cubic-bezier(0.215, 0.610, 0.355, 1);
+}
+
+/* ドキドキするアニメーション（ハートビート） */
+@keyframes heartbeat {
+  0% {
+    transform: scale(1);
+  }
+  20% {
+    transform: scale(1.15);
+  }
+  40% {
+    transform: scale(1.05);
+  }
+  60% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* スマホ等でタップした瞬間も少し沈むように */
+.btn-heart-list:active {
+  transform: scale(0.9);
+}
+
+
+/* ==========================================================================
+   🎫 チケットデザインシステム 
+   ========================================================================== */
+
+/* チケットを包むラッパー（余白の確保とホバー検出用） */
+.ticket-card-wrapper {
+  position: relative;
+  list-style: none;
+  margin-bottom: 8px;
+  padding: 4px; /* ボタンがはみ出ても途切れないように */
+}
+
+/* チケット全体 */
+.ticket-card {
+  display: flex;
+  background: linear-gradient(135deg, #ffffff 75%, #fff1f3 100%); /* 右側がほんのりピンク */
+  border-radius: 16px;
+  box-shadow: 0 6px 18px rgba(27, 1, 6, 0.08); /* ふんわりピンク影 */
+  position: relative;
+  overflow: hidden; /* 左端カラーバーの角を丸めるため */
+  border: 1px solid rgba(237, 40, 69, 0.25);
+  min-height: 110px;
+}
+
+/* 左端のカラーアクセント */
+.ticket-color-bar {
+  width: 6px;
+  background: linear-gradient(to bottom, #ff6b8b, #ff9cae);
+  flex-shrink: 0;
+}
+
+/* メイン情報エリア（左側） */
+.ticket-main {
+  flex: 1;
+  padding: 16px 12px 14px 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0; /* 文字省略用の設定 */
+}
+
+/* イベント名（上部・小さめグレー） */
+.ticket-event-name {
+  font-size: 11px;
+  color: #a2a2a2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+/* アーティスト名（中央・極太黒） */
+.ticket-artist {
+  font-size: 21px;
+  font-weight: 800;
+  color: #1a1a1a;
+  line-height: 1.2;
+  margin-bottom: 4px;
+}
+
+/* 会場名（下部・中くらいグレー） */
+.ticket-venue {
+  font-size: 13px;
+  font-weight: 600;
+  color: #666666;
+  margin-bottom: 6px;
+}
+
+
+
+/* ミシン目（切り取り線） */
+.ticket-tear-line {
+  width: 0px;
+  border-left: 2px dashed #fcdce2;
+  margin: 12px 0;
+  position: relative;
+  flex-shrink: 0;
+}
+
+/* チケット上下のパンチ穴（切り欠き）の再現 ✂️ */
+.ticket-card::before,
+.ticket-card::after {
+  content: "";
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  /* アプリの背景色と同じ色にすることで、くり抜かれているように見せます */
+  background-color: #fafafa; 
+  border-radius: 50%;
+  right: 88px; /* スタブ幅 90px - 半径 8px + 微調整 */
+  z-index: 5;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.03); /* ちょっとリアルにする影 */
+}
+
+/* 上のパンチ穴 */
+.ticket-card::before {
+  top: -8px;
+  border-bottom: 1px solid rgba(255, 182, 193, 0.25);
+}
+
+/* 下のパンチ穴 */
+.ticket-card::after {
+  bottom: -8px;
+  border-top: 1px solid rgba(255, 182, 193, 0.25);
+}
+
+/* 半券エリア（右側） */
+.ticket-stub {
+  width: 90px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 4px;
+  background-color: rgba(255, 245, 247, 0.3); /* 半券部分だけ極うすピンク */
+  text-align: center;
+}
+
+/* 半券の年（2026） */
+.stub-year {
+  font-size: 11px;
+  color: #a2a2a2;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  margin-bottom: 2px;
+}
+
+/* 半券の日付（6.20） */
+.stub-date {
+  font-size: 22px;
+  font-weight: 800;
+  color: #1a1a1a;
+  line-height: 1;
+}
+
+/* 半券の曜日（土） */
+.stub-day {
+  font-size: 11px;
+  color: #666666;
+  font-weight: 600;
+  margin-top: 3px;
+}
+
+/* バーコード風の装飾 📊 */
+.stub-barcode {
+  display: flex;
+  gap: 1.5px;
+  justify-content: center;
+  margin-top: auto; /* 一番下へ固定 */
+  height: 16px;
+  opacity: 0.25;
+}
+
+.stub-barcode span {
+  display: inline-block;
+  width: 1px;
+  height: 100%;
+  background-color: #1a1a1a;
+}
+
+/* バーコードの太さを不規則にして本物っぽく */
+.stub-barcode span:nth-child(2n) { width: 2px; }
+.stub-barcode span:nth-child(5n) { width: 3px; }
+.stub-barcode span:nth-child(7n) { width: 1.5px; }
+
+/* 編集・削除ボタンを乗せるコンテナ */
+.ticket-actions {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  display: flex;
+  gap: 6px;
+  opacity: 0; /* 通常時は非表示 */
+  transform: translateY(4px);
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  z-index: 10;
+}
+
+/* カードをホバー（スマホはタップ）した瞬間にボタンがぷかっと出現 */
+.ticket-card-wrapper:hover .ticket-actions {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* 浮き出る丸ボタン */
+.ticket-actions button {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid #ffe3e8;
+  background-color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(255, 117, 143, 0.2);
+  transition: transform 0.2s;
+}
+
+.ticket-actions button:hover {
+  transform: scale(1.15);
+}
+
+/* ==========================================================================
+   🚶 移動手段アイコンセレクター
+   ========================================================================== */
+
+/* 横並びにするコンテナ */
+.transport-selector {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  margin-top: 8px;
+  width: 100%;
+}
+
+/* 各アイコンボタンの基本スタイル */
+.transport-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 0 !important; /* 上下のパディング */
+  background: #ffffff !important;
+  border: 1.5px solid #ffe3e8 !important; /* 優しいピンクの枠線 */
+  border-radius: 14px !important;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+  box-shadow: none !important; /* デフォルトのボタン影をクリア */
+  height: auto !important;
+}
+
+/* ボタン内の絵文字（アイコン） */
+.transport-icon {
+  font-size: 20px;
+  margin-bottom: 2px;
+  display: block;
+}
+
+/* ボタン内の文字ラベル */
+.transport-label {
+  font-size: 10px !important;
+  color: #666666 !important;
+  font-weight: bold;
+}
+
+/* ✨ ホバー（触れた）したとき */
+.transport-btn:hover {
+  background: #fff8fa !important;
+  transform: translateY(-2px);
+}
+
+/* 🌟 選択中（アクティブ）の時のスタイル */
+.transport-btn.active {
+  background: #fff0f5 !important; /* いちごミルクピンクの背景 */
+  border: 2px solid #ff2a75 !important; /* 濃いピンクのしっかりフチ */
+  transform: scale(1.08) translateY(-2px); /* ぷくっと少し大きくなって上に浮く */
+  box-shadow: 0 4px 12px rgba(255, 42, 117, 0.15) !important; /* かわいいピンクの影 */
+}
+
+/* 選択中（アクティブ）の時の文字色 */
+.transport-btn.active .transport-label {
+  color: #ff2a75 !important;
 }

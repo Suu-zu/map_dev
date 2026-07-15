@@ -1046,3 +1046,118 @@ ul {
 .transport-btn.active .transport-label {
   color: #ff2a75 !important;
 }
+/* ==========================================================================
+   🏠 自宅登録画面（HomeLocation）の新しいスタイル
+   ========================================================================== */
+
+/* 画面全体の背景（グラデーションを今風に綺麗に） */
+.home-location-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(135deg, #ffeef2 0%, #eae4f9 100%);
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+/* 中央に浮かぶカード型コンテナ */
+.home-location-card {
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 40px 30px;
+  width: 100%;
+  max-width: 380px;
+  box-shadow: 0 12px 35px rgba(255, 150, 180, 0.25);
+  text-align: center;
+  border: 1.5px solid #ffe3e8;
+  animation: cardFadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+
+/* タイトル */
+.home-location-card h2 {
+  font-size: 1.45rem;
+  color: #333333;
+  margin: 0 0 12px 0;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+/* 説明テキスト */
+.home-location-desc {
+  font-size: 0.85rem;
+  color: #666666;
+  line-height: 1.6;
+  margin: 0 0 28px 0;
+}
+
+/* フォームの縦並び */
+.home-location-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* 入力欄（LiveFormのピンク枠に合わせました） */
+.home-location-input {
+  width: 100%;
+  padding: 14px 18px;
+  border-radius: 14px;
+  border: 1.5px solid #ffe3e8;
+  font-size: 1rem;
+  outline: none;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+  background-color: #fff9fa;
+  text-align: center; /* 入力文字を中央にして見やすく */
+}
+
+.home-location-input:focus {
+  border-color: #ff2a75;
+  background-color: #ffffff;
+  box-shadow: 0 0 0 4px rgba(255, 42, 117, 0.1);
+}
+
+/* 保存ボタン（LiveFormの更新するボタンに統一！） */
+.home-location-btn {
+  width: 100%;
+  padding: 14px;
+  border-radius: 14px;
+  border: none;
+  background: #ff2a75;
+  color: #ffffff;
+  font-size: 1.05rem;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(255, 42, 117, 0.35);
+  transition: all 0.2s ease;
+}
+
+.home-location-btn:hover {
+  background: #e01a61;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(255, 42, 117, 0.45);
+}
+
+.home-location-btn:active {
+  transform: translateY(1px);
+}
+
+/* 🌟 アニメーション効果 */
+@keyframes cardFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes houseBounce {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  50% { transform: translateY(-6px) rotate(2deg); }
+}

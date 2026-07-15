@@ -1,75 +1,67 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { supabase } from "../supabase";
+import { getCoordinates } from "../utils/geo";
 
-function HomeLocation({ session, onComplete }) {
-  const [homeName, setHomeName] = useState("");
+export default function HomeLocation({ session, onComplete }) {
+  const [address, setAddress] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const getCoordinates = async (place) => {
-    const response = await fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(place)}`
-    );
-
-    const data = await response.json();
-
-    if (data.length === 0) {
-      return null;
-    }
-
-    return {
-      latitude: parseFloat(data[0].lat),
-      longitude: parseFloat(data[0].lon),
-    };
-  };
-
-  const handleSave = async () => {
-    if (!homeName) {
-      alert("住所を入力してください");
+  const handleSave = async (e) => {
+    e.preventDefault();
+    if (!address.trim()) {
+      alert("自宅の場所（都道府県や市区町村）を入力してください");
       return;
     }
 
-    const location = await getCoordinates(homeName);
-
-    if (!location) {
-      alert("住所が見つかりませんでした");
-      return;
-    }
-
-    const { error } = await supabase
-      .from("home_location")
-      .insert([
+    setLoading(true);
+    try {
+      // 入力された文字から座標を取得
+      const { lat, lng } = await getCoordinates(address);
+      
+      // Supabaseに登録
+      const { error } = await supabase.from("home_location").insert([
         {
           user_id: session.user.id,
-          home_name: homeName,
-          latitude: location.latitude,
-          longitude: location.longitude,
+          home_name: address,
+          latitude: lat,
+          longitude: lng,
         },
       ]);
 
-    if (error) {
-      console.error(error);
-      alert("保存に失敗しました");
-      return;
+      if (error) throw error;
+      onComplete(); // 登録完了してメイン画面へ
+    } catch (err) {
+      console.error(err);
+      alert("保存に失敗しました。もう一度お試しください。");
+    } finally {
+      setLoading(false);
     }
-
-    onComplete();
   };
 
   return (
-    <div className="login-container">
-      <h1>🏠 自宅を登録</h1>
-
-      <input
-        type="text"
-        placeholder="例：東京都〇〇市"
-        value={homeName}
-        onChange={(e) => setHomeName(e.target.value)}
-      />
-
-      <button onClick={handleSave}>
-        保存
-      </button>
+    <div className="home-location-container">
+      <div className="home-location-card">
+        <div className="home-location-icon">🏠</div>
+        <h2>自宅を登録</h2>
+        <p className="home-location-desc">
+          ライブ会場までの正確な距離やルートを計算するために、
+          およその自宅位置（例：東京都、神奈川県など）を登録してください。
+        </p>
+        
+        <form onSubmit={handleSave} className="home-location-form">
+          <input
+            type="text"
+            placeholder="例：神奈川県"
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+            className="home-location-input"
+            disabled={loading}
+          />
+          <button type="submit" className="home-location-btn" disabled={loading}>
+            {loading ? "保存中..." : "保存する"}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }
-
-export default HomeLocation;

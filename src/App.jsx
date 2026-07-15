@@ -35,31 +35,88 @@ function App() {
   const summaryData = useMemo(() => getSummaryData(records, homeLocation), [records, homeLocation]);
   const nextLive = useMemo(() => getNextLive(records), [records]);
 
+  // ユーザーIDに紐づくライブ履歴を取得
+  const fetchRecords = async (userId) => {
+    if (!userId) return;
+    const { data, error } = await supabase
+      .from("live_records")
+      .select("*")
+      .eq("user_id", userId)
+      .order("event_date", { ascending: true });
+
+    if (error) {
+      console.error(error);
+      return;
+    }
+
+    setRecords(
+      data.map((item) => ({
+        id: item.id,
+        artist: item.artist,
+        eventName: item.event_name,
+        venue: item.venue,
+        date: item.event_date,
+        transportation: item.transportation,
+        latitude: item.latitude,
+        longitude: item.longitude,
+      }))
+    );
+  };
+
   // データ保存・編集
   const handleRegister = async () => {
-    if (!artist || !eventName || !venue || !date) {
+    if (!artist || !eventName || !venue || !date || !session) {
       alert("すべて入力してください");
       return;
     }
     const { lat, lng } = await getCoordinates(venue);
 
-    if (isEditing) {
-      const { error } = await supabase.from("live_records").update({
-        artist, event_name: eventName, venue, event_date: date, transportation, latitude: lat, longitude: lng,
-      }).eq("id", editingId);
+    // 🌟 対策1：空文字の場合は null にしてSupabaseの保存失敗を防ぐ
+    const dbTransportation = transportation || null;
 
-      if (error) return alert("更新に失敗しました");
-      await fetchRecords();
+    if (isEditing) {
+      // 🌟 対策2：update時にもeq("user_id", ...)を追加して他人のデータ操作を防ぐ
+      const { error } = await supabase
+        .from("live_records")
+        .update({
+          artist,
+          event_name: eventName,
+          venue,
+          event_date: date,
+          transportation: dbTransportation,
+          latitude: lat,
+          longitude: lng,
+        })
+        .eq("id", editingId)
+        .eq("user_id", session.user.id);
+
+      if (error) {
+        console.error("更新エラー詳細:", error);
+        return alert("更新に失敗しました");
+      }
+      await fetchRecords(session.user.id);
       setEditingId(null);
       setIsEditing(false);
       setShowFormModal(false);
     } else {
-      const { error } = await supabase.from("live_records").insert([{
-        artist, event_name: eventName, venue, event_date: date, transportation, latitude: lat, longitude: lng,
-      }]);
+      const { error } = await supabase.from("live_records").insert([
+        {
+          user_id: session.user.id,
+          artist,
+          event_name: eventName,
+          venue,
+          event_date: date,
+          transportation: dbTransportation,
+          latitude: lat,
+          longitude: lng,
+        },
+      ]);
 
-      if (error) return alert("保存に失敗しました");
-      await fetchRecords();
+      if (error) {
+        console.error("保存エラー詳細:", error);
+        return alert("保存に失敗しました");
+      }
+      await fetchRecords(session.user.id);
       setShowFormModal(false);
     }
     // フォームをリセット
@@ -74,24 +131,23 @@ function App() {
     setTransportation(record.transportation || "");
     setEditingId(record.id);
     setIsEditing(true);
-    setActiveTab("map"); // ✏️を押した時に自動でマップタブに切り替えてモーダルを開く
+    setActiveTab("map");
     setShowFormModal(true);
   };
 
   const handleDelete = async (id) => {
+    if (!session) return;
     if (!window.confirm("このライブ記録を削除してもよろしいですか？")) return;
-    const { error } = await supabase.from("live_records").delete().eq("id", id);
-    if (error) return alert("削除に失敗しました");
-    fetchRecords();
-  };
 
-  const fetchRecords = async () => {
-    const { data, error } = await supabase.from("live_records").select("*").order("event_date", { ascending: true });
-    if (error) return console.error(error);
-    setRecords(data.map((item) => ({
-      id: item.id, artist: item.artist, eventName: item.event_name, venue: item.venue,
-      date: item.event_date, transportation: item.transportation, latitude: item.latitude, longitude: item.longitude,
-    })));
+    // 🌟 対策2：delete時にもeq("user_id", ...)を追加して他人のデータ操作を防ぐ
+    const { error } = await supabase
+      .from("live_records")
+      .delete()
+      .eq("id", id)
+      .eq("user_id", session.user.id);
+
+    if (error) return alert("削除に失敗しました");
+    fetchRecords(session.user.id);
   };
 
   const checkHomeLocation = async (userId) => {
@@ -108,10 +164,10 @@ function App() {
   };
 
   useEffect(() => {
-    fetchRecords();
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
       if (data.session) {
+        fetchRecords(data.session.user.id); 
         checkHomeLocation(data.session.user.id);
         fetchHomeLocation(data.session.user.id);
       } else {
@@ -122,10 +178,12 @@ function App() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       if (session) {
+        fetchRecords(session.user.id);
         checkHomeLocation(session.user.id);
         fetchHomeLocation(session.user.id);
       } else {
         setLoadingHome(false);
+        setRecords([]); // 🌟 対策3：ログアウト時は前の人のデータを綺麗に消去する
       }
     });
     return () => subscription.unsubscribe();

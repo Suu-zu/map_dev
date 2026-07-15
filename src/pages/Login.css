@@ -4,7 +4,13 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  background: linear-gradient(135deg, #ffd1dc 0%, #e2d4f7 100%);
+  background:
+linear-gradient(
+180deg,
+#fffdfd 0%,
+#fff7fa 45%,
+#ffeef4 100%
+);
   padding: 20px;
   box-sizing: border-box;
 }

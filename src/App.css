@@ -1057,7 +1057,13 @@ ul {
   align-items: center;
   width: 100vw;
   height: 100vh;
-  background: linear-gradient(135deg, #ffeef2 0%, #eae4f9 100%);
+ background:
+linear-gradient(
+180deg,
+#fffdfd 0%,
+#fff7fa 45%,
+#ffeef4 100%
+);
   padding: 20px;
   box-sizing: border-box;
 }

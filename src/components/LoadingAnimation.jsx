@@ -24,7 +24,7 @@ export default function LoadingAnimation({ onFinish }) {
         <div className="ticket-body">
           <div className="ticket-decor-top">✦ LIVE MEMORIES ✦</div>
           <div className="ticket-title">SPECIAL PASS</div>
-          <div className="ticket-sub">推し活の思い出をあつめよう</div>
+          <div className="ticket-sub">思い出をあつめよう</div>
           <div className="tap-text">♡ TOUCH TO ENTER ♡</div>
         </div>
 
